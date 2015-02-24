@@ -11,11 +11,15 @@
 
 package org.oclc.eao.collective.web.config;
 
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.oclc.eao.collective.api.domain.NtService;
 import org.oclc.eao.collective.api.domain.NtStore;
+import org.oclc.eao.collective.store.hbase.HBaseStore;
 import org.oclc.eao.collective.web.model.InMemoryNtStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.io.IOException;
 
 /**
  * Description:
@@ -28,11 +32,13 @@ import org.springframework.context.annotation.Configuration;
 public class ServiceConfig {
 
     @Bean
-    NtStore ntStore(){
-            return new InMemoryNtStore();
+    NtStore ntStore() {
+        return new HBaseStore(HBaseConfiguration.create());
     }
+
     @Bean
-    NtService ntService(){
+    NtService ntService() {
         return new NtService(ntStore());
     }
+
 }

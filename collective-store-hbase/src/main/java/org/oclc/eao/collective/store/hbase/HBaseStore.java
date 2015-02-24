@@ -18,6 +18,7 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HConnection;
@@ -52,14 +53,19 @@ public class HBaseStore implements NtStore {
     private String tableName = "eao_collective";
     private ObjectPool<HTableInterface> pool;
 
-    public HBaseStore(Configuration config) throws IOException {
-        this.config = config;
-        hConnection = HConnectionManager.createConnection(config);
-        GenericObjectPoolConfig poolCfg = new GenericObjectPoolConfig();
-        poolCfg.setMaxTotal(10);
-        pool = new GenericObjectPool<HTableInterface>(new HTablePoolObjectFactory(), poolCfg);
+    public HBaseStore(Configuration config){
+        try {
+            this.config = config;
+            hConnection = HConnectionManager.createConnection(config);
+            GenericObjectPoolConfig poolCfg = new GenericObjectPoolConfig();
+            poolCfg.setMaxTotal(10);
+            pool = new GenericObjectPool<HTableInterface>(new HTablePoolObjectFactory(), poolCfg);
 
-        LOG.info("HTable server instantiated...");
+            LOG.info("HTable server instantiated...");
+        } catch (ZooKeeperConnectionException e) {
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException("Failed to start HBaseStore:", e);
+        }
     }
 
     @Override

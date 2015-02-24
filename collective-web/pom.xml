@@ -25,6 +25,11 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <folders>
+                        <folder>/Users/jamiesoh/opt/higgins/perf_conf</folder>
+                    </folders>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -37,7 +42,26 @@
         <dependency>
             <groupId>org.oclc.eao</groupId>
             <artifactId>collective-api</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.oclc.eao</groupId>
+            <artifactId>collective-store-hbase</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-compiler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-runtime</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
