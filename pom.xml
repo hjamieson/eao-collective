@@ -14,6 +14,7 @@
         <spring.version>4.1.5.RELEASE</spring.version>
         <spring.boot.version>1.2.1.RELEASE</spring.boot.version>
         <hadoop.pom.version>0.1-SNAPSHOT</hadoop.pom.version>
+        <elasticsearch.version>1.4.4</elasticsearch.version>
     </properties>
 
     <description>EAO LD Collective Concept Vehicle</description>
@@ -67,6 +68,12 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
+            <dependency>
+                <groupId>org.elasticsearch</groupId>
+                <artifactId>elasticsearch</artifactId>
+                <version>${elasticsearch.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
