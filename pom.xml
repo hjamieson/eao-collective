@@ -23,6 +23,7 @@
         <module>collective-store-hbase</module>
         <module>collective-indexer-elasticsearch</module>
         <module>collective-web</module>
+        <module>collective-mr</module>
     </modules>
 
     <dependencyManagement>

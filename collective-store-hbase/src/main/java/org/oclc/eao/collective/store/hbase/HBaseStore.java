@@ -49,11 +49,10 @@ public class HBaseStore implements NtStore {
     public static final byte[] DEFAULT_CF = "data".getBytes();
     private final HConnection hConnection;
     private Configuration config;
-    //    private ConcurrentHashMap<String, HTableInterface> _tables;
     private String tableName = "eao_collective";
     private ObjectPool<HTableInterface> pool;
 
-    public HBaseStore(Configuration config){
+    public HBaseStore(Configuration config) {
         try {
             this.config = config;
             hConnection = HConnectionManager.createConnection(config);
@@ -70,14 +69,7 @@ public class HBaseStore implements NtStore {
 
     @Override
     public void save(Triple nt) throws IOException {
-        Put put = new Put(Bytes.toBytes(nt.getId()));
-        put.add(DEFAULT_CF, Triple.ID_TAG.getBytes(), nt.getId().getBytes());
-        put.add(DEFAULT_CF, Triple.TEXT_TAG.getBytes(), nt.getText().getBytes());
-        put.add(DEFAULT_CF, Triple.ORIGIN_TAG.getBytes(), nt.getOrigin().getBytes());
-        put.add(DEFAULT_CF, Triple.WEIGHT_TAG.getBytes(), Bytes.toBytes(nt.getWeight()));
-        for (Map.Entry<String, String> e : nt.entrySet()) {
-            put.add(DEFAULT_CF, e.getKey().getBytes(), e.getValue().getBytes());
-        }
+        Put put = getPut(nt);
         HTableInterface hTable = null;
         try {
             hTable = pool.borrowObject();
@@ -92,6 +84,18 @@ public class HBaseStore implements NtStore {
                 // ok to swallow
             }
         }
+    }
+
+    public static Put getPut(Triple nt) {
+        Put put = new Put(Bytes.toBytes(nt.getId()));
+        put.add(DEFAULT_CF, Triple.ID_TAG.getBytes(), nt.getId().getBytes());
+        put.add(DEFAULT_CF, Triple.TEXT_TAG.getBytes(), nt.getText().getBytes());
+        put.add(DEFAULT_CF, Triple.ORIGIN_TAG.getBytes(), nt.getOrigin().getBytes());
+        put.add(DEFAULT_CF, Triple.WEIGHT_TAG.getBytes(), Bytes.toBytes(nt.getWeight()));
+        for (Map.Entry<String, String> e : nt.entrySet()) {
+            put.add(DEFAULT_CF, e.getKey().getBytes(), e.getValue().getBytes());
+        }
+        return put;
     }
 
     @Override
