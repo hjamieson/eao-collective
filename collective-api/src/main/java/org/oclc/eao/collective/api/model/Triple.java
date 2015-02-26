@@ -11,11 +11,10 @@
 
 package org.oclc.eao.collective.api.model;
 
-import org.oclc.eao.collective.api.domain.NtService;
+import org.apache.commons.lang.Validate;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Description: The venerable RDF triple as it exists in this collective framework.  Its really just a hashmap.
@@ -25,26 +24,37 @@ import java.util.UUID;
  * &copy;2013 OCLC Data Architecture Group
  */
 public class Triple extends HashMap<String, String> {
+    public static final String ID_TAG = ":id";
+    public static final String ORIGIN_TAG = "origin";
+    public static final String TEXT_TAG = "text";
+    public static final String WEIGHT_TAG = "weight";
+    public static final String DEFAULT_WEIGHT = "0.8";
     private String id;
+    private String origin;
+    private String weight;
+    private String text;
 
     public Triple() {
         super();
-        setId(UUID.randomUUID().toString());
+        setWeight(DEFAULT_WEIGHT);
+    }
+
+    public Triple(String id) {
+        this();
+        this.id = id;
     }
 
     public Triple(Map<? extends String, ? extends String> m) {
         super(m);
-        setId(UUID.randomUUID().toString());
+        setWeight(DEFAULT_WEIGHT);
     }
 
-    public Triple(Map<? extends String, ? extends String> m, String id){
+    public Triple(String id, Map<? extends String, ? extends String> m) {
         super(m);
         setId(id);
+        setWeight(DEFAULT_WEIGHT);
     }
 
-    public Triple(String id) {
-        setId(id);
-    }
 
     @Override
     public String toString() {
@@ -61,6 +71,30 @@ public class Triple extends HashMap<String, String> {
 
     public void setId(String id) {
         this.id = id;
-        this.put(NtService.ID_TAG, id);
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public String getWeight() {
+        return weight;
+    }
+
+    public void setWeight(String weight) {
+        Validate.isTrue(weight.matches("(0\\.)?[0-9]+"),String.format("invalid weight specification: %1$s", weight));
+        this.weight = weight;
     }
 }

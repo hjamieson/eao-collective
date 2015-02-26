@@ -46,7 +46,7 @@ import java.util.NavigableMap;
  */
 public class HBaseStore implements NtStore {
     private static final Logger LOG = LoggerFactory.getLogger(HBaseStore.class);
-    public static final String DEFAULT_CF = "data";
+    public static final byte[] DEFAULT_CF = "data".getBytes();
     private final HConnection hConnection;
     private Configuration config;
     //    private ConcurrentHashMap<String, HTableInterface> _tables;
@@ -71,8 +71,12 @@ public class HBaseStore implements NtStore {
     @Override
     public void save(Triple nt) throws IOException {
         Put put = new Put(Bytes.toBytes(nt.getId()));
+        put.add(DEFAULT_CF, Triple.ID_TAG.getBytes(), nt.getId().getBytes());
+        put.add(DEFAULT_CF, Triple.TEXT_TAG.getBytes(), nt.getText().getBytes());
+        put.add(DEFAULT_CF, Triple.ORIGIN_TAG.getBytes(), nt.getOrigin().getBytes());
+        put.add(DEFAULT_CF, Triple.WEIGHT_TAG.getBytes(), Bytes.toBytes(nt.getWeight()));
         for (Map.Entry<String, String> e : nt.entrySet()) {
-            put.add(DEFAULT_CF.getBytes(), e.getKey().getBytes(), e.getValue().getBytes());
+            put.add(DEFAULT_CF, e.getKey().getBytes(), e.getValue().getBytes());
         }
         HTableInterface hTable = null;
         try {
@@ -106,7 +110,7 @@ public class HBaseStore implements NtStore {
                 Triple resp = new Triple();
                 resp.setId(result.getRow().toString());
                 // get all columns in data family
-                NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(DEFAULT_CF.getBytes());
+                NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(DEFAULT_CF);
                 for (Map.Entry<byte[], byte[]> v : familyMap.entrySet()) {
                     resp.put(Bytes.toString(v.getKey()), Bytes.toString(v.getValue()));
                 }

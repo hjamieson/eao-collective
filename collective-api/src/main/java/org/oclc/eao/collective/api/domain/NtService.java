@@ -1,5 +1,6 @@
 package org.oclc.eao.collective.api.domain;
 
+import org.apache.commons.lang.Validate;
 import org.oclc.eao.collective.api.model.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,32 +18,42 @@ import java.util.UUID;
  */
 public class NtService {
     private static final Logger LOG = LoggerFactory.getLogger(NtService.class);
+    public static final String TRIPLE_ALREADY_PERSISTED = "id has already been assigned!";
 
-    public static final String ID_TAG = ":id";
-    public static final String ORIGIN_TAG = "origin";
-    public static final String TEXT_TAG = "text";
 
     private NtStore ntStore;
 
-    public Triple create(Map<String, String> nt) throws IOException {
-        // make sure we don't have an id:
-        if (nt.containsKey(ID_TAG)) {
-            throw new IllegalArgumentException("id has already been assigned!");
-        }
-        // make sure we have an origin:
-        if (!nt.containsKey(ORIGIN_TAG)) {
-            throw new IllegalArgumentException("no origin tag found");
-        }
-        // make sure we have a text value for the triple:
-        if (!nt.containsKey(TEXT_TAG)) {
-            throw new IllegalArgumentException("no text tag found");
+    public Triple create(Map<String, String> map) throws IOException {
+        Validate.isTrue(!map.containsKey(Triple.ID_TAG),TRIPLE_ALREADY_PERSISTED);
+        Validate.notEmpty(map.get(Triple.ORIGIN_TAG),"no ORIGIN tag found");
+        Validate.notEmpty(map.get(Triple.TEXT_TAG),"no TEXT tag found");
+        Triple triple = new Triple();
+        triple.setId(UUID.randomUUID().toString());
+        map.remove(Triple.ID_TAG);
+        triple.setOrigin(map.get(Triple.ORIGIN_TAG));
+        map.remove(Triple.ORIGIN_TAG);
+        triple.setText(map.get(Triple.TEXT_TAG));
+        map.remove(Triple.TEXT_TAG);
+        if (map.containsKey(Triple.WEIGHT_TAG)) {
+            triple.setWeight(map.get(Triple.WEIGHT_TAG));
+            map.remove(Triple.WEIGHT_TAG);
         }
 
-        Triple triple = new Triple(nt, UUID.randomUUID().toString());
+        triple.putAll(map);
+
         ntStore.save(triple);
         return triple;
-
     }
+
+    public Triple create(Triple triple) throws IOException {
+        Validate.isTrue(triple.getId() == null, TRIPLE_ALREADY_PERSISTED);
+        Validate.notEmpty(triple.getOrigin(), "no origin tag found");
+        Validate.notEmpty(triple.getText(), "missing N-Triple text");
+        triple.setId(UUID.randomUUID().toString());
+        ntStore.save(triple);
+        return triple;
+    }
+
 
     public Triple get(String id) throws IOException {
         return ntStore.get(id);

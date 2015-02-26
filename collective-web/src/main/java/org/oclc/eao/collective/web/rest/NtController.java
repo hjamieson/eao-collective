@@ -49,6 +49,7 @@ public class NtController {
     @RequestMapping(method = RequestMethod.POST)
     ResponseEntity<Void> post(@RequestBody HashMap<String, String> map, ServletUriComponentsBuilder uriBuilder) throws IOException {
         LOG.debug("post for {} received", map);
+
         Triple triple = ntService.create(map);
         HttpHeaders headers = new HttpHeaders();
         UriComponents uri = uriBuilder.path("/nt/{id}").build().expand(triple.getId());
