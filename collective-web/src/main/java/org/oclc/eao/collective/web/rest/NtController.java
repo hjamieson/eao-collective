@@ -61,4 +61,10 @@ public class NtController {
     Map<String, String> get(@PathVariable String id) throws IOException {
         return ntService.get(id);
     }
+
+    @RequestMapping(method = RequestMethod.DELETE, value = "/{id}")
+    ResponseEntity<Void> delete(@PathVariable String id) throws IOException {
+        ntService.delete(id);
+        return new ResponseEntity<Void>(HttpStatus.OK);
+    }
 }

@@ -29,10 +29,6 @@ public class Triple extends HashMap<String, String> {
     public static final String TEXT_TAG = "text";
     public static final String WEIGHT_TAG = "weight";
     public static final String DEFAULT_WEIGHT = "0.8";
-    private String id;
-    private String origin;
-    private String weight;
-    private String text;
 
     public Triple() {
         super();
@@ -41,7 +37,7 @@ public class Triple extends HashMap<String, String> {
 
     public Triple(String id) {
         this();
-        this.id = id;
+        setId(id);
     }
 
     public Triple(Map<? extends String, ? extends String> m) {
@@ -60,41 +56,41 @@ public class Triple extends HashMap<String, String> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("triple{");
-        sb.append("id:").append(id);
+        sb.append("id:").append(getId());
         sb.append("}");
         return sb.toString();
     }
 
     public String getId() {
-        return id;
+        return get(ID_TAG);
     }
 
     public void setId(String id) {
-        this.id = id;
+        put(ID_TAG, id);
     }
 
     public String getOrigin() {
-        return origin;
+        return get(ORIGIN_TAG);
     }
 
     public void setOrigin(String origin) {
-        this.origin = origin;
+        put(ORIGIN_TAG, origin);
     }
 
     public String getText() {
-        return text;
+        return get(TEXT_TAG);
     }
 
     public void setText(String text) {
-        this.text = text;
+        put(TEXT_TAG, text);
     }
 
     public String getWeight() {
-        return weight;
+        return get(WEIGHT_TAG);
     }
 
     public void setWeight(String weight) {
-        Validate.isTrue(weight.matches("(0\\.)?[0-9]+"),String.format("invalid weight specification: %1$s", weight));
-        this.weight = weight;
+        Validate.isTrue(weight.matches("(0\\.)?[0-9]+"), String.format("invalid weight specification: %1$s", weight));
+        put(WEIGHT_TAG, weight);
     }
 }
