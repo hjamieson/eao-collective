@@ -28,6 +28,7 @@ public class Triple extends HashMap<String, String> {
     public static final String ORIGIN_TAG = "origin";
     public static final String TEXT_TAG = "text";
     public static final String WEIGHT_TAG = "weight";
+    public static final String COLLECTION_TAG = "collection";
     public static final String DEFAULT_WEIGHT = "0.8";
 
     public Triple() {
@@ -92,5 +93,13 @@ public class Triple extends HashMap<String, String> {
     public void setWeight(String weight) {
         Validate.isTrue(weight.matches("(0\\.)?[0-9]+"), String.format("invalid weight specification: %1$s", weight));
         put(WEIGHT_TAG, weight);
+    }
+
+    public String getCollection() {
+        return get(COLLECTION_TAG);
+    }
+
+    public void setCollection(String collection) {
+        put(COLLECTION_TAG, collection);
     }
 }

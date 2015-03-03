@@ -46,6 +46,11 @@
         </dependency>
         <dependency>
             <groupId>org.oclc.eao</groupId>
+            <artifactId>collective-indexer-elasticsearch</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.oclc.eao</groupId>
             <artifactId>collective-store-hbase</artifactId>
             <version>${project.version}</version>
             <exclusions>

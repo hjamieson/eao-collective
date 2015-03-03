@@ -13,9 +13,11 @@ package org.oclc.eao.collective.web.rest;
 
 import org.oclc.eao.collective.api.domain.NtService;
 import org.oclc.eao.collective.api.model.Triple;
+import org.oclc.eao.collective.indexer.IndexClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,16 +47,26 @@ public class NtController {
 
     @Autowired
     private NtService ntService;
+    @Value("${nt.index.active}")
+    private boolean activeIndex;
+    @Autowired
+    private IndexClient indexClient;
 
     @RequestMapping(method = RequestMethod.POST)
     ResponseEntity<Void> post(@RequestBody HashMap<String, String> map, ServletUriComponentsBuilder uriBuilder) throws IOException {
-        LOG.debug("post for {} received", map);
+        LOG.trace("post for {} received", map);
 
         Triple triple = ntService.create(map);
         HttpHeaders headers = new HttpHeaders();
         UriComponents uri = uriBuilder.path("/nt/{id}").build().expand(triple.getId());
         headers.setLocation(uri.toUri());
-        return new ResponseEntity<Void>(null, headers, HttpStatus.CREATED);
+        ResponseEntity<Void> response = new ResponseEntity<Void>(null, headers, HttpStatus.CREATED);
+
+        // index this data if active:
+        if (activeIndex){
+            indexClient.index(triple);
+        }
+        return response;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/{id}")
@@ -65,6 +77,9 @@ public class NtController {
     @RequestMapping(method = RequestMethod.DELETE, value = "/{id}")
     ResponseEntity<Void> delete(@PathVariable String id) throws IOException {
         ntService.delete(id);
+        if (activeIndex){
+            indexClient.delete(id);
+        }
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
 }

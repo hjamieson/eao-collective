@@ -14,8 +14,10 @@ package org.oclc.eao.collective.web.config;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.oclc.eao.collective.api.domain.NtService;
 import org.oclc.eao.collective.api.domain.NtStore;
+import org.oclc.eao.collective.indexer.IndexClient;
 import org.oclc.eao.collective.store.hbase.HBaseStore;
 import org.oclc.eao.collective.web.model.InMemoryNtStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,6 +32,8 @@ import java.io.IOException;
  */
 @Configuration
 public class ServiceConfig {
+    @Value("${index.host.list}")
+    private String[] indexHostList;
 
     @Bean
     NtStore ntStore() {
@@ -41,4 +45,8 @@ public class ServiceConfig {
         return new NtService(ntStore());
     }
 
+    @Bean
+    IndexClient indexClient() {
+        return new IndexClient(indexHostList).connect();
+    }
 }

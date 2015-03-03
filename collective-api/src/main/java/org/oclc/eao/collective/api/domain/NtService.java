@@ -27,6 +27,7 @@ public class NtService {
         Validate.isTrue(!map.containsKey(Triple.ID_TAG),TRIPLE_ALREADY_PERSISTED);
         Validate.notEmpty(map.get(Triple.ORIGIN_TAG),"no ORIGIN tag found");
         Validate.notEmpty(map.get(Triple.TEXT_TAG),"no TEXT tag found");
+        Validate.notEmpty(map.get(Triple.COLLECTION_TAG), "no COLLECTION tag found");
         Triple triple = new Triple();
         triple.setId(UUID.randomUUID().toString());
         map.remove(Triple.ID_TAG);
@@ -47,8 +48,9 @@ public class NtService {
 
     public Triple create(Triple triple) throws IOException {
         Validate.isTrue(triple.getId() == null, TRIPLE_ALREADY_PERSISTED);
-        Validate.notEmpty(triple.getOrigin(), "no origin tag found");
+        Validate.notEmpty(triple.getOrigin(), "missing N-Triple origin");
         Validate.notEmpty(triple.getText(), "missing N-Triple text");
+        Validate.notEmpty(triple.getCollection(), "missing N-Triple collection name");
         triple.setId(UUID.randomUUID().toString());
         ntStore.save(triple);
         return triple;

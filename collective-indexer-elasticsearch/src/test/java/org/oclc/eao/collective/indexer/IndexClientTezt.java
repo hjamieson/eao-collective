@@ -28,12 +28,12 @@ import static org.junit.Assert.assertThat;
  * Time: 3:21 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class ClusterClientTezt {
+public class IndexClientTezt {
 
 
     @Test
     public void indexTest() {
-        ClusterClient client = new ClusterClient("tripstoreap01dxdu.dev.oclc.org","tripstoreap02dxdu.dev.oclc.org").connect();
+        IndexClient client = new IndexClient("tripstoreap01dxdu.dev.oclc.org","tripstoreap02dxdu.dev.oclc.org").connect();
         HashMap<String, Object> map = new HashMap<>();
         map.put("name", "Bazinga");
         map.put("address", "511 Eleven Street");

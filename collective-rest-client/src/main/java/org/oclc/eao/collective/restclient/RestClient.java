@@ -49,7 +49,7 @@ public class RestClient {
 
     public URI post(Triple triple) {
         URI location = restTemplate.postForLocation(rootUrl + "/nt", triple, Collections.emptyMap());
-        LOG.debug("triple {} created", location);
+        LOG.trace("triple {} created", location);
         return location;
     }
 
@@ -63,7 +63,7 @@ public class RestClient {
 
     public void delete(Triple triple) {
         restTemplate.delete(rootUrl + "/nt/{id}", triple.getId());
-        LOG.debug("triple {} deleted", triple.getId());
+        LOG.trace("triple {} deleted", triple.getId());
     }
 
 

@@ -11,39 +11,50 @@
 
 package org.oclc.eao.collective.indexer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.oclc.eao.collective.api.model.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 /**
- * Description: uses transport mode to make calls to the elasticsearch cluster.
+ * Description: uses transport mode to make calls to the elasticsearch cluster.  This is the
+ * client to use unless you are doing unit testing.
  * User: jamiesoh
  * Date: 2/25/15
  * Time: 2:14 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class ClusterClient {
-    private static final Logger LOG = LoggerFactory.getLogger(ClusterClient.class);
+public class IndexClient {
+    private static final Logger LOG = LoggerFactory.getLogger(IndexClient.class);
     public static final String CLIENT_NOT_CONNECTED = "client not connected";
+    public static final String INDEX = "collective";
+    public static final String TYPE_NT = "triple";
     private String[] hostList;
     private TransportClient client;
+    private final ObjectMapper om;
 
-    public ClusterClient(String... hostList) {
+    public IndexClient(String... hostList) {
         this.hostList = hostList;
+        om = new ObjectMapper();
     }
 
-    public ClusterClient connect() {
+    public IndexClient connect() {
         if (client != null) {
             throw new IllegalStateException("client already connected");
         }
         Settings settings = ImmutableSettings.settingsBuilder()
-                .put("client.transport.ignore_cluster_name", true).build();
+                .put("client.transport.ignore_cluster_name", true)
+                .put("client.transport.sniff", true)
+                .build();
         client = new TransportClient(settings);
         for (String hostName : hostList) {
             client.addTransportAddress(new InetSocketTransportAddress(hostName, 9300));
@@ -79,5 +90,19 @@ public class ClusterClient {
         } else {
             throw new IllegalStateException(CLIENT_NOT_CONNECTED);
         }
+    }
+
+    public void index(Triple triple) {
+        try {
+            String json = om.writeValueAsString(triple);
+            IndexRequestBuilder request = client.prepareIndex(INDEX, TYPE_NT, triple.getId()).setSource(json);
+            request.execute();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void delete(String id) {
+        client.prepareDelete(INDEX, TYPE_NT, id).execute();
     }
 }
