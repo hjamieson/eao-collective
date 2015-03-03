@@ -37,10 +37,10 @@ public class TripleHelper {
 
     //todo need to handle blank node (_:alice, _:bob)
 
-    private TripleHelper(){
+    private TripleHelper() {
     }
 
-    public static boolean isWellFormed(String nTripleString){
+    public static boolean isWellFormed(String nTripleString) {
         boolean good = true;
 
         Matcher m = NT_3URI.matcher(nTripleString);
@@ -53,50 +53,50 @@ public class TripleHelper {
                 }
             }
         }
-        return true;
+        return good;
     }
 
-    public static String getSubject(String nTripleString){
+    public static String getSubject(String nTripleString) {
         Matcher m = NT_SUBJ_PRED.matcher(nTripleString);
-        return (m.matches()) ? m.group(1): "";
+        return (m.matches()) ? m.group(1) : "";
     }
 
-    public static String getPredicate(String nTripleString){
+    public static String getPredicate(String nTripleString) {
         Matcher m = NT_SUBJ_PRED.matcher(nTripleString);
-        return m.matches()? m.group(2): "";
+        return m.matches() ? m.group(2) : "";
     }
 
-    public static String getObjectFragment(String nTripleString){
+    public static String getObjectFragment(String nTripleString) {
         Matcher m = NT_OBJECT_FRAGMENT.matcher(nTripleString);
-        return m.matches()? m.group(1).trim(): "";
+        return m.matches() ? m.group(1).trim() : "";
     }
 
-    public enum LiteralType {
+    public enum ObjectType {
         LITERAL,
         LITERAL_WITH_LANG,
         LITERAL_WITH_TYPE,
         URI
     }
 
-    public static LiteralType getLiteralType(String nTripleString){
+    public static ObjectType getObjectType(String nTripleString) {
         String frag = getObjectFragment(nTripleString);
-        if (NT_OBJ_LITERAL.matcher(frag).matches()){
-            return LiteralType.LITERAL;
-        } else if (NT_OBJ_WITH_TYPE.matcher(frag).matches()){
-            return LiteralType.LITERAL_WITH_TYPE;
-        } else if (NT_OBJ_WITH_LANG.matcher(frag).matches()){
-            return LiteralType.LITERAL_WITH_LANG;
+        if (NT_OBJ_WITH_TYPE.matcher(frag).matches()) {
+            return ObjectType.LITERAL_WITH_TYPE;
+        } else if (NT_OBJ_WITH_LANG.matcher(frag).matches()) {
+            return ObjectType.LITERAL_WITH_LANG;
+        } else if (NT_OBJ_LITERAL.matcher(frag).matches()) {
+            return ObjectType.LITERAL;
         } else {
-            return LiteralType.URI;
+            return ObjectType.URI;
         }
     }
 
-    public static String getLanguage(String nTripleString){
-        if (getLiteralType(nTripleString)==LiteralType.LITERAL_WITH_LANG){
+    public static String getLanguage(String nTripleString) {
+        if (getObjectType(nTripleString) == ObjectType.LITERAL_WITH_LANG) {
             Matcher m = NT_OBJ_WITH_LANG.matcher(getObjectFragment(nTripleString));
-            if (m.matches()){
-                return m.group(2);
-            }else {
+            if (m.matches()) {
+                return m.group(1);
+            } else {
                 return "";
             }
         }

@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.oclc.eao.collective.api.TripleHelper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 /**
@@ -61,6 +62,27 @@ public class TripleHelperTest {
         assertThat(TripleHelper.getObjectFragment(triple[4]), equalTo("\"2\"^^<http://www.w3.org/2001/XMLSchema#integer>"));
     }
 
+
+    @Test
+    public void testGetLiteralType() {
+        assertThat(TripleHelper.getObjectType(triple[1]), equalTo(TripleHelper.ObjectType.URI));
+        assertThat(TripleHelper.getObjectType(triple[2]), equalTo(TripleHelper.ObjectType.LITERAL));
+        assertThat(TripleHelper.getObjectType(triple[3]), equalTo(TripleHelper.ObjectType.LITERAL_WITH_LANG));
+        assertThat(TripleHelper.getObjectType(triple[4]), equalTo(TripleHelper.ObjectType.LITERAL_WITH_TYPE));
+        assertThat(TripleHelper.getObjectType(triple[5]), equalTo(TripleHelper.ObjectType.LITERAL_WITH_TYPE));
+    }
+
+    @Test
+    public void testIsWellFormed() {
+        assertThat(TripleHelper.isWellFormed(triple[1]), is(true));
+        assertThat(TripleHelper.isWellFormed(triple[2]), is(true));
+        assertThat(TripleHelper.isWellFormed(triple[3]), is(true));
+        assertThat(TripleHelper.isWellFormed(triple[4]), is(true));
+        assertThat(TripleHelper.isWellFormed(triple[5]), is(true));
+        assertThat(TripleHelper.isWellFormed("total garbage"), is(false));
+
+    }
+
     @Test
     public void testGetLiteral() {
 
@@ -68,16 +90,8 @@ public class TripleHelperTest {
 
     @Test
     public void testGetLiteralLang() {
+        assertThat(TripleHelper.getLanguage(triple[3]), equalTo("en"));
 
     }
 
-    @Test
-    public void testGetLiteralType() {
-
-    }
-
-    @Test
-    public void testIsWellFormed() {
-
-    }
 }

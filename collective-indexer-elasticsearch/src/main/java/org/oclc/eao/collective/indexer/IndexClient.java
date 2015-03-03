@@ -19,6 +19,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.model.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,6 +94,9 @@ public class IndexClient {
     }
 
     public void index(Triple triple) {
+        // we will decorate with some extra terms that we can search for later.
+        triple.put("subj", TripleHelper.getSubject(triple.getText()));
+        triple.put("pred", TripleHelper.getPredicate(triple.getText()));
         try {
             String json = om.writeValueAsString(triple);
             IndexRequestBuilder request = client.prepareIndex(INDEX, TYPE_NT, triple.getId()).setSource(json);

@@ -60,7 +60,7 @@ public class TripleController {
         try {
             Triple triple = ntService.create(map);
             HttpHeaders headers = new HttpHeaders();
-            UriComponents uri = uriBuilder.path("/nt/{id}").build().expand(triple.getId());
+            UriComponents uri = uriBuilder.path("/triple/{id}").build().expand(triple.getId());
             headers.setLocation(uri.toUri());
             response = new ResponseEntity<Void>(null, headers, HttpStatus.CREATED);
 
