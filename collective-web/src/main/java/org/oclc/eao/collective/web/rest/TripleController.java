@@ -41,9 +41,9 @@ import java.util.Map;
  * &copy;2013 OCLC Data Architecture Group
  */
 @RestController
-@RequestMapping("nt")
-public class NtController {
-    private static final Logger LOG = LoggerFactory.getLogger(NtController.class);
+@RequestMapping("/triple")
+public class TripleController {
+    private static final Logger LOG = LoggerFactory.getLogger(TripleController.class);
 
     @Autowired
     private NtService ntService;
@@ -56,15 +56,21 @@ public class NtController {
     ResponseEntity<Void> post(@RequestBody HashMap<String, String> map, ServletUriComponentsBuilder uriBuilder) throws IOException {
         LOG.trace("post for {} received", map);
 
-        Triple triple = ntService.create(map);
-        HttpHeaders headers = new HttpHeaders();
-        UriComponents uri = uriBuilder.path("/nt/{id}").build().expand(triple.getId());
-        headers.setLocation(uri.toUri());
-        ResponseEntity<Void> response = new ResponseEntity<Void>(null, headers, HttpStatus.CREATED);
+        ResponseEntity<Void> response = null;
+        try {
+            Triple triple = ntService.create(map);
+            HttpHeaders headers = new HttpHeaders();
+            UriComponents uri = uriBuilder.path("/nt/{id}").build().expand(triple.getId());
+            headers.setLocation(uri.toUri());
+            response = new ResponseEntity<Void>(null, headers, HttpStatus.CREATED);
 
-        // index this data if active:
-        if (activeIndex){
-            indexClient.index(triple);
+            // index this data if active:
+            if (activeIndex) {
+                indexClient.index(triple);
+            }
+        } catch (IllegalArgumentException e) {
+            LOG.error("POST for triple failed; reason={}", e.getMessage());
+            response = new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
         }
         return response;
     }
@@ -77,7 +83,7 @@ public class NtController {
     @RequestMapping(method = RequestMethod.DELETE, value = "/{id}")
     ResponseEntity<Void> delete(@PathVariable String id) throws IOException {
         ntService.delete(id);
-        if (activeIndex){
+        if (activeIndex) {
             indexClient.delete(id);
         }
         return new ResponseEntity<Void>(HttpStatus.OK);

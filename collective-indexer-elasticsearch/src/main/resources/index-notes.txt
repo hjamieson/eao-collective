@@ -1,0 +1,55 @@
+curl -v -H "Content-type: application/json" --data '{"text":"<http://example.org/foo><http://schema.org/name> hello .","origin":"adhoc","tag":"extra tags"}' localhost:8080/nt
+
+curl -v -H "Content-type:application/json" localhost:8080/nt/f5b5bc1e-c1f9-4548-9be5-ed41f107f2d
+
+for n in {1..10};do
+FOO="{\"origin\":\"foo-test\", \"text\":\"<http://test/$n>\"}"
+#echo "$FOO"
+curl -H "Content-type:application/json" --data "$FOO" localhost:8080/nt
+done
+
+
+Collective Notes
+index name: collective
+document types:
+	triple {:id,	the unique identifier assigned to this triple
+		text,		the body text (the triple)
+		origin,		the hash of the source of this data
+		collection,	the named of this collection (person, images, etc)
+		weight		a weight assigned to each triple
+		}
+	origin {id, name, description, src, acquired,}
+
+Create the triple mappings for Elasticsearch:
+curl -v -XPUT 'localhost:9200/collective/_mapping/triple' --data
+{
+	"triple": {
+		"_source": {
+			"enabled": false
+		},
+		"properties": {
+			":id": {
+				"type":"string"
+			},
+			"text": {
+				"type":"string"
+			},
+			"origin": {
+				"type":"string"
+			},
+			"collection": {
+				"type":"string"
+			},
+			"weight": {
+				"type":"float"
+			},
+			"subj":{
+				"type":"string"
+			},
+			"pred": {
+				"type": "string"
+			}
+		}
+	}
+}
+

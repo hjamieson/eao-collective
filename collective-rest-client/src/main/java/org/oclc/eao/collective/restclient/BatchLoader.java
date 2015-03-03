@@ -27,9 +27,9 @@ import java.io.InputStreamReader;
  */
 public class BatchLoader {
     public static void main(String[] args) {
-        if (args.length != 2) {
+        if (args.length != 3) {
             System.err.println(args);
-            System.err.println("Usage: BatchLoader <web-address> <origin>");
+            System.err.println("Usage: BatchLoader <web-address> <origin> <collection>");
             System.exit(1);
         }
         RestClient rest = new RestClient(args[0]);
@@ -41,6 +41,7 @@ public class BatchLoader {
                 Triple t = new Triple();
                 t.setText(text);
                 t.setOrigin(args[1]);
+                t.setCollection(args[2]);
                 rest.post(t);
                 loaded++;
                 if (loaded % 10000 == 0){

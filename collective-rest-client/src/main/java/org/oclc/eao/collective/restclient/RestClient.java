@@ -48,7 +48,7 @@ public class RestClient {
     }
 
     public URI post(Triple triple) {
-        URI location = restTemplate.postForLocation(rootUrl + "/nt", triple, Collections.emptyMap());
+        URI location = restTemplate.postForLocation(rootUrl + "/triple", triple, Collections.emptyMap());
         LOG.trace("triple {} created", location);
         return location;
     }
