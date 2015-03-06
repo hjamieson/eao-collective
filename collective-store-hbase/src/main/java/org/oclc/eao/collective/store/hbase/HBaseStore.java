@@ -11,12 +11,6 @@
 
 package org.oclc.eao.collective.store.hbase;
 
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
@@ -50,16 +44,11 @@ public class HBaseStore implements NtStore {
     private final HConnection hConnection;
     private Configuration config;
     private String tableName = "eao_collective";
-    private ObjectPool<HTableInterface> pool;
 
     public HBaseStore(Configuration config) {
         try {
             this.config = config;
             hConnection = HConnectionManager.createConnection(config);
-            GenericObjectPoolConfig poolCfg = new GenericObjectPoolConfig();
-            poolCfg.setMaxTotal(10);
-            pool = new GenericObjectPool<HTableInterface>(new HTablePoolObjectFactory(), poolCfg);
-
             LOG.info("HTable server instantiated...");
         } catch (ZooKeeperConnectionException e) {
             LOG.error(e.getMessage(), e);
@@ -72,17 +61,12 @@ public class HBaseStore implements NtStore {
         Put put = getPut(nt);
         HTableInterface hTable = null;
         try {
-            hTable = pool.borrowObject();
+            hTable = hConnection.getTable(tableName);
             hTable.put(put);
-            hTable.flushCommits();
         } catch (Exception e) {
             throw new IOException(e);
         } finally {
-            try {
-                pool.returnObject(hTable);
-            } catch (Exception e) {
-                // ok to swallow
-            }
+            hTable.close();
         }
     }
 
@@ -103,12 +87,7 @@ public class HBaseStore implements NtStore {
         Get get = new Get(Bytes.toBytes(id));
         HTableInterface hTable = null;
         try {
-            hTable = pool.borrowObject();
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-            throw new IOException(e.getMessage(), e);
-        }
-        try {
+            hTable = hConnection.getTable(tableName);
             Result result = hTable.get(get);
             if (!result.isEmpty()) {
                 Triple resp = new Triple();
@@ -123,10 +102,7 @@ public class HBaseStore implements NtStore {
                 return null;
             }
         } finally {
-            try {
-                pool.returnObject(hTable);
-            } catch (Exception e) {
-            }
+            hTable.close();
         }
     }
 
@@ -139,22 +115,12 @@ public class HBaseStore implements NtStore {
     public void delete(String id) throws IOException {
         Delete del = new Delete(Bytes.toBytes(id));
         HTableInterface hTable = null;
-
         try {
-            hTable = pool.borrowObject();
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-            throw new IOException(e.getMessage(), e);
-        }
-
-        try {
+            hTable = hConnection.getTable(tableName);
             hTable.delete(del);
             hTable.flushCommits();
         } finally {
-            try {
-                pool.returnObject(hTable);
-            } catch (Exception e) {
-            }
+            hTable.close();
         }
     }
 
@@ -162,8 +128,6 @@ public class HBaseStore implements NtStore {
      * signals that we are done with this store and all resources can be released.
      */
     public void close() {
-        // release all tables
-        pool.close();
         try {
             hConnection.close();
         } catch (IOException e) {
@@ -180,27 +144,4 @@ public class HBaseStore implements NtStore {
         this.tableName = tableName;
     }
 
-    public class HTablePoolObjectFactory extends BasePooledObjectFactory<HTableInterface> {
-        @Override
-        public HTableInterface create() throws Exception {
-            return hConnection.getTable(tableName);
-        }
-
-        @Override
-        public PooledObject<HTableInterface> wrap(HTableInterface hTableInterface) {
-            return new DefaultPooledObject<>(hTableInterface);
-        }
-
-        @Override
-        public void passivateObject(PooledObject<HTableInterface> p) throws Exception {
-            super.passivateObject(p);
-            p.getObject().flushCommits();
-        }
-
-        @Override
-        public void destroyObject(PooledObject<HTableInterface> p) throws Exception {
-            LOG.debug("closing pooled hTable {}", p.getObject().toString());
-            p.getObject().close();
-        }
-    }
 }

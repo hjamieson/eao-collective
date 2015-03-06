@@ -16,6 +16,11 @@ import org.oclc.eao.collective.api.model.Triple;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Description: Reads n-triples from stdin and posts them to the collective-web where they
@@ -26,28 +31,35 @@ import java.io.InputStreamReader;
  * &copy;2013 OCLC Data Architecture Group
  */
 public class BatchLoader {
+    public static final int CORE_POOL_SIZE = 20;
+    public static final int MAXIMUM_POOL_SIZE = 20;
+    public static final int QUEUE_SIZE = 20;
+    private static RestClient restClient;
+
     public static void main(String[] args) {
         if (args.length != 3) {
             System.err.println(args);
             System.err.println("Usage: BatchLoader <web-address> <origin> <collection>");
             System.exit(1);
         }
-        RestClient rest = new RestClient(args[0]);
+        ExecutorService es =
+                new ThreadPoolExecutor(CORE_POOL_SIZE,
+                        MAXIMUM_POOL_SIZE,
+                        100, TimeUnit.MILLISECONDS,
+                        new ArrayBlockingQueue<Runnable>(QUEUE_SIZE),
+                        new ThreadPoolExecutor.CallerRunsPolicy());
+
+        restClient = new RestClient(args[0]);
+//        restClient.setEndpoint("/noop");
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String text = null;
         long loaded = 0;
         try {
             while ((text = reader.readLine()) != null) {
-                Triple t = new Triple();
-                t.setText(text);
-                t.setOrigin(args[1]);
-                t.setCollection(args[2]);
-                rest.post(t);
-                loaded++;
-                if (loaded % 10000 == 0){
-                    System.out.println("records posted: "+ loaded);
-                }
+                es.execute(new Task(text, args[1], args[2]));
+                System.out.println("records loaded: " + ++loaded);
             }
+            es.shutdown();
             System.out.format("%1$d records stored", loaded);
         } catch (Exception e) {
             e.printStackTrace();
@@ -58,6 +70,26 @@ public class BatchLoader {
             } catch (IOException e) {
             }
         }
+    }
 
+    public static class Task implements Runnable {
+        private String text;
+        private String origin;
+        private String collection;
+
+        public Task(String text, String origin, String collection) {
+            this.text = text;
+            this.origin = origin;
+            this.collection = collection;
+        }
+
+        @Override
+        public void run() {
+            Triple t = new Triple();
+            t.setText(text);
+            t.setOrigin(origin);
+            t.setCollection(collection);
+            restClient.post(t);
+        }
     }
 }

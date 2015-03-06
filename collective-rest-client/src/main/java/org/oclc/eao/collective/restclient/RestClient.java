@@ -11,12 +11,14 @@
 
 package org.oclc.eao.collective.restclient;
 
+import org.apache.commons.lang.Validate;
 import org.oclc.eao.collective.api.model.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 
 /**
@@ -28,12 +30,19 @@ import java.util.Collections;
  */
 public class RestClient {
     private static final Logger LOG = LoggerFactory.getLogger(RestClient.class);
+    private String endpoint = "/triple";
     private String rootUrl;
     private RestTemplate restTemplate;
+    private URI postURI;
 
     public RestClient(String rootUrl) {
         this.rootUrl = rootUrl;
         restTemplate = new RestTemplate();
+        try {
+            postURI = new URI(rootUrl + endpoint);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     public RestClient() {
@@ -45,16 +54,36 @@ public class RestClient {
 
     public void setRootUrl(String rootUrl) {
         this.rootUrl = rootUrl;
+        try {
+            postURI = new URI(rootUrl + endpoint);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
+
+    }
+
+    public String getEndpoint() {
+        return endpoint;
+    }
+
+    public void setEndpoint(String endpoint) {
+        Validate.isTrue(endpoint.startsWith("/"), "endpoint must start with a /");
+        this.endpoint = endpoint;
+        try {
+            postURI = new URI(rootUrl + endpoint);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     public URI post(Triple triple) {
-        URI location = restTemplate.postForLocation(rootUrl + "/triple", triple, Collections.emptyMap());
+        URI location = restTemplate.postForLocation(postURI, triple);
         LOG.trace("triple {} created", location);
         return location;
     }
 
     public Triple get(String id) {
-        return restTemplate.getForObject(rootUrl + "/nt/{id}", Triple.class, id);
+        return restTemplate.getForObject(rootUrl + endpoint + "/{id}", Triple.class, id);
     }
 
     public Triple get(URI location) {
@@ -62,7 +91,7 @@ public class RestClient {
     }
 
     public void delete(Triple triple) {
-        restTemplate.delete(rootUrl + "/nt/{id}", triple.getId());
+        restTemplate.delete(rootUrl + endpoint + "/{id}", triple.getId());
         LOG.trace("triple {} deleted", triple.getId());
     }
 

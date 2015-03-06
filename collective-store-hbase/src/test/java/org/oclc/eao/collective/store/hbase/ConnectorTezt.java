@@ -56,10 +56,7 @@ public class ConnectorTezt {
 
     @Test
     public void insertTest(){
-        Triple triple = new Triple("foobar");
-        triple.put("alpha","one");
-        triple.put("beta","two");
-        triple.put("gamma","three");
+        Triple triple = getTriple("foobar");
 
         try {
             store.save(triple);
@@ -72,9 +69,20 @@ public class ConnectorTezt {
         }
     }
 
+    private Triple getTriple(String id) {
+        Triple triple = new Triple(id);
+        triple.setText("<subject><predicate><object> .");
+        triple.setOrigin("junit");
+        triple.setCollection("junit");
+        triple.put("alpha","one");
+        triple.put("beta","two");
+        triple.put("gamma","three");
+        return triple;
+    }
+
     @Test
     public void writeReadTest(){
-        Triple triple = new Triple("barfoo");
+        Triple triple = getTriple("barfoo");
         triple.put("alpha","uno");
         triple.put("beta","dos");
         triple.put("gamma","tres");
@@ -93,7 +101,7 @@ public class ConnectorTezt {
 
     @Test
     public void testDelete(){
-        Triple triple = new Triple("klaatu");
+        Triple triple = getTriple("klaatu");
         triple.put("alpha","einer");
         triple.put("beta","zwei");
         triple.put("gamma","drei");
