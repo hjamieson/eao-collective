@@ -47,15 +47,18 @@ public class NtLoader extends Configured implements Tool {
     public static final String JOB_TITLE = "Collective (HBase) Bulk Loader";
     public static final byte[] DEFAULT_CF = Bytes.toBytes("data");
     public static final String ORIGIN_KEY = "loader.origin";
+    public static final String COLLECTION_KEY = "loader.collection";
 
     public static class NtLoaderMapper extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
         private ImmutableBytesWritable ROWKEY = new ImmutableBytesWritable();
         private String origin;
+        private String collection;
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
             origin = context.getConfiguration().get(ORIGIN_KEY);
             Validate.notEmpty(origin, "unspecified ORIGIN value");
+            collection = context.getConfiguration().get(COLLECTION_KEY);
         }
 
         @Override
@@ -65,6 +68,7 @@ public class NtLoader extends Configured implements Tool {
             Triple triple = new Triple(UUID.randomUUID().toString());
             triple.setText(line.toString());
             triple.setOrigin(origin);
+            triple.setCollection(collection);
             Put put = getPut(triple);
             ROWKEY.set(put.getRow());
             context.write(ROWKEY, put);
@@ -76,6 +80,7 @@ public class NtLoader extends Configured implements Tool {
         put.add(DEFAULT_CF, Triple.ID_TAG.getBytes(), nt.getId().getBytes());
         put.add(DEFAULT_CF, Triple.TEXT_TAG.getBytes(), nt.getText().getBytes());
         put.add(DEFAULT_CF, Triple.ORIGIN_TAG.getBytes(), nt.getOrigin().getBytes());
+        put.add(DEFAULT_CF, Triple.COLLECTION_TAG.getBytes(), nt.getCollection().getBytes());
         put.add(DEFAULT_CF, Triple.WEIGHT_TAG.getBytes(), Bytes.toBytes(nt.getWeight()));
         for (Map.Entry<String, String> e : nt.entrySet()) {
             put.add(DEFAULT_CF, e.getKey().getBytes(), e.getValue().getBytes());
@@ -94,7 +99,7 @@ public class NtLoader extends Configured implements Tool {
     }
 
     /**
-     * we expect two arguments: (0)= name of file, and (1) = origin value.
+     * we expect three arguments: (0)= name of file, (1) = origin value, and (2) = collection value.
      *
      * @param args
      * @return
@@ -102,15 +107,18 @@ public class NtLoader extends Configured implements Tool {
      */
     @Override
     public int run(String[] args) throws Exception {
-        Validate.notEmpty(args[0],"missing input file path");
-        Validate.notEmpty(args[1], "missing ORIGIN specification");
-
+        if (args.length != 3) {
+            System.err.println("Usage: " + NtLoader.class.getSimpleName() + " <nt-file-path> <origin> <collection>");
+            System.exit(1);
+        }
         // args[0] = path to file
         // args[1] = origin value
+        // args[2] = collection value
 
         Configuration conf = getConf();
 
         conf.set(ORIGIN_KEY, args[1]);
+        conf.set(COLLECTION_KEY, args[2]);
         if (conf.getClassLoader() == null) {
             conf.setClassLoader(this.getClass().getClassLoader());
         }

@@ -57,8 +57,12 @@ public class TripleHelper {
     }
 
     public static String getSubject(String nTripleString) {
-        Matcher m = NT_SUBJ_PRED.matcher(nTripleString);
-        return (m.matches()) ? m.group(1) : "";
+        try {
+            Matcher m = NT_SUBJ_PRED.matcher(nTripleString);
+            return (m.matches()) ? m.group(1) : "";
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage()+"::"+nTripleString);
+        }
     }
 
     public static String getPredicate(String nTripleString) {
