@@ -13,6 +13,7 @@ package org.oclc.eao.collective.indexer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.Validate;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
@@ -24,6 +25,7 @@ import org.oclc.eao.collective.api.model.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -94,11 +96,19 @@ public class IndexClient {
     }
 
     public void index(Triple triple) {
+        Validate.notEmpty(triple.getId(), Triple.ID_TAG + " value missing; required");
+        Validate.notEmpty(triple.getLoadId(), Triple.LOADID_TAG + " value missing; required");
+        Validate.notEmpty(triple.getCollection(), Triple.COLLECTION_TAG + " value missing; required");
         // we will decorate with some extra terms that we can search for later.
-        triple.put("subj", TripleHelper.getSubject(triple.getText()));
-        triple.put("pred", TripleHelper.getPredicate(triple.getText()));
+        Map<String, String> idx = new HashMap<>();
+        idx.put(Triple.ID_TAG, triple.getId());
+        idx.put(Triple.LOADID_TAG, triple.getLoadId());
+        idx.put(Triple.COLLECTION_TAG, triple.getCollection());
+        idx.put("subj", TripleHelper.getSubject(triple.getText()));
+        idx.put("pred", TripleHelper.getPredicate(triple.getText()));
+        idx.put("obj", TripleHelper.getObjectFragment(triple.getText()));
         try {
-            String json = om.writeValueAsString(triple);
+            String json = om.writeValueAsString(idx);
             IndexRequestBuilder request = client.prepareIndex(INDEX, TYPE_NT, triple.getId()).setSource(json);
             request.execute();
         } catch (Exception e) {
