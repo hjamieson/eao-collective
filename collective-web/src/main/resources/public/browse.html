@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Collective Browser</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <style type="text/css">
+    div.tab {
+    	width:100px;
+    	float:left;
+    }
+    </style>
+</head>
+<body ng-app="browse" class="container">
+<script type="text/javascript" src="js/angular.min.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/browse.js"></script>
+
+<div>
+	<p class="alert alert-info">You have reached the collective {{ "mash"+"up" }}...</p>
+</div>
+<div ng-controller="TabController as tc">
+	<div class="tab">
+		<p><a href="" ng-click="tc.setCurrent(1)">by Subject</a></p>
+	</div>
+	<div class="tab">
+		<p><a href="" ng-click="tc.setCurrent(2)">by Predicate</a></p>
+	</div>
+	<div class="tab">
+		<p><a href="" ng-click="tc.setCurrent(3)">by Literal</a></p>
+	</div>
+	<div style="clear:left">{{ tc.current }}</div>
+		<input type="text" placeholder="literal search" size="30"/>
+</div>
+
+<div class="results">
+	
+</div>
+
+</body>
+</html>

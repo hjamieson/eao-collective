@@ -9,27 +9,26 @@
  *
  ******************************************************************************************************************/
 
-package org.oclc.eao.collective.web.config;
+package org.oclc.eao.collective.web;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.annotation.PropertySources;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
- * Description:
+ * Description:  This controller serves up the pages for browsing.
  * User: jamiesoh
- * Date: 2/27/15
- * Time: 3:54 PM
+ * Date: 3/12/15
+ * Time: 10:50 AM
  * &copy;2013 OCLC Data Architecture Group
  */
-@Configuration
-@PropertySources({@PropertySource("classpath:web_common.properties")})
-public class PropertiesConfig {
+@Controller
+public class BrowseController {
+    private static final Logger LOG = LoggerFactory.getLogger(BrowseController.class);
 
-    @Bean
-    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-        return new PropertySourcesPlaceholderConfigurer();
+    @RequestMapping("/browsex")
+    public String browse(){
+        return "redirect:browse.html";
     }
 }

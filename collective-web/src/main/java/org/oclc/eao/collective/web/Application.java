@@ -13,6 +13,7 @@ package org.oclc.eao.collective.web;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -24,9 +25,10 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
  * Time: 12:14 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-@EnableWebMvc
+@SpringBootApplication
+//@EnableWebMvc
 @Configuration
-@EnableAutoConfiguration
+//@EnableAutoConfiguration
 @ComponentScan("org.oclc.eao.collective.web")
 public class Application {
     public static void main(String[] args) {
