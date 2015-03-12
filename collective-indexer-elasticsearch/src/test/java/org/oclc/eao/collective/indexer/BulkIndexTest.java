@@ -14,9 +14,12 @@ package org.oclc.eao.collective.indexer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.model.Triple;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -29,12 +32,17 @@ import static org.junit.Assert.assertThat;
 public class BulkIndexTest {
     @Test
     public void testMapper() throws JsonProcessingException {
-        ObjectMapper om = new ObjectMapper();
-        Triple t = new Triple("foo");
-        t.setOrigin("junit");
-        t.setCollection("junit-collection");
-        String json = om.writeValueAsString(t);
+        Triple t = TripleHelper.makeTriple("<foo><bar><baz> .","test","714");
+        String json = TripleHelper.toJSON(t);
         System.out.println(json);
         assertThat(json.contains("\n"), is(false));
+    }
+
+    @Test
+    public void testBulkIndexFilter(){
+        Triple t = TripleHelper.makeTriple("<foo><bar><baz> .","junit","404");
+        String json = ElasticCommandBuilder.asBulkIndex(t);
+        assertThat(json.charAt(json.length()-2), not(equalTo('\n')));
+        System.out.println(json);
     }
 }

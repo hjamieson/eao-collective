@@ -39,7 +39,7 @@ public class BatchLoader {
     public static void main(String[] args) {
         if (args.length != 3) {
             System.err.println(args);
-            System.err.println("Usage: BatchLoader <web-address> <origin> <collection>");
+            System.err.println("Usage: BatchLoader <web-address> <loadId> <collection>");
             System.exit(1);
         }
         ExecutorService es =
@@ -74,12 +74,12 @@ public class BatchLoader {
 
     public static class Task implements Runnable {
         private String text;
-        private String origin;
+        private String loadId;
         private String collection;
 
-        public Task(String text, String origin, String collection) {
+        public Task(String text, String loadId, String collection) {
             this.text = text;
-            this.origin = origin;
+            this.loadId = loadId;
             this.collection = collection;
         }
 
@@ -87,7 +87,7 @@ public class BatchLoader {
         public void run() {
             Triple t = new Triple();
             t.setText(text);
-            t.setOrigin(origin);
+            t.setLoadId(loadId);
             t.setCollection(collection);
             restClient.post(t);
         }

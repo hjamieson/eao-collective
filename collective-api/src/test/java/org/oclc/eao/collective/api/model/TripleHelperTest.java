@@ -17,6 +17,7 @@ import org.oclc.eao.collective.api.TripleHelper;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.fail;
 
 /**
  * User: jamiesoh
@@ -91,6 +92,22 @@ public class TripleHelperTest {
     @Test
     public void testGetLiteralLang() {
         assertThat(TripleHelper.getLanguage(triple[3]), equalTo("en"));
+
+    }
+
+    @Test
+    public void testBadFactory(){
+        Triple t1 = TripleHelper.makeTriple("<foo><bar><baz> .","hughs","12345");
+        try {
+            TripleHelper.makeTriple("<foo <bar><baz> .","hughs","12345");
+            fail("should throw");
+        } catch (Exception e) {
+        }
+        try {
+            TripleHelper.makeTriple("<foo> <bar><baz> ","hughs","12345");
+            fail("missing .; should throw");
+        } catch (Exception e) {
+        }
 
     }
 

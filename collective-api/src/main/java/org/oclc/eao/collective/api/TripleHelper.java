@@ -11,6 +11,11 @@
 
 package org.oclc.eao.collective.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.Validate;
+import org.oclc.eao.collective.api.model.Triple;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +41,8 @@ public class TripleHelper {
     public static Pattern NT_OBJ_LITERAL = Pattern.compile("^\".+");
 
     //todo need to handle blank node (_:alice, _:bob)
+
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private TripleHelper() {
     }
@@ -107,4 +114,20 @@ public class TripleHelper {
         throw new IllegalArgumentException("no lang tag available");
     }
 
+    public static Triple makeTriple(String nTripleText, String collection, String loadId){
+        Validate.isTrue(isWellFormed(nTripleText));
+        Triple triple = new Triple();
+        triple.setText(nTripleText);
+        triple.setCollection(collection);
+        triple.setLoadId(loadId);
+        return triple;
+    }
+
+    public static String toJSON(Triple triple){
+        try {
+            return objectMapper.writeValueAsString(triple);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

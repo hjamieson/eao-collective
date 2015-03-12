@@ -24,8 +24,8 @@ import java.util.Map;
  * &copy;2013 OCLC Data Architecture Group
  */
 public class Triple extends HashMap<String, String> {
-    public static final String ID_TAG = ":id";
-    public static final String ORIGIN_TAG = "origin";
+    public static final String ID_TAG = "id";
+    public static final String LOADID_TAG = "loadId";
     public static final String TEXT_TAG = "text";
     public static final String WEIGHT_TAG = "weight";
     public static final String COLLECTION_TAG = "collection";
@@ -36,21 +36,21 @@ public class Triple extends HashMap<String, String> {
         setWeight(DEFAULT_WEIGHT);
     }
 
-    public Triple(String id) {
-        this();
-        setId(id);
-    }
+//    public Triple(String id) {
+//        this();
+//        setId(id);
+//    }
 
     public Triple(Map<? extends String, ? extends String> m) {
         super(m);
         setWeight(DEFAULT_WEIGHT);
     }
 
-    public Triple(String id, Map<? extends String, ? extends String> m) {
-        super(m);
-        setId(id);
-        setWeight(DEFAULT_WEIGHT);
-    }
+//    public Triple(String id, Map<? extends String, ? extends String> m) {
+//        super(m);
+//        setId(id);
+//        setWeight(DEFAULT_WEIGHT);
+//    }
 
 
     @Override
@@ -70,12 +70,12 @@ public class Triple extends HashMap<String, String> {
         put(ID_TAG, id);
     }
 
-    public String getOrigin() {
-        return get(ORIGIN_TAG);
+    public String getLoadId() {
+        return get(LOADID_TAG);
     }
 
-    public void setOrigin(String origin) {
-        put(ORIGIN_TAG, origin);
+    public void setLoadId(String loadId) {
+        put(LOADID_TAG, loadId);
     }
 
     public String getText() {

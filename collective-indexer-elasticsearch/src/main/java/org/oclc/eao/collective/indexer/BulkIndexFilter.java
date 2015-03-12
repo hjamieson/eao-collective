@@ -39,22 +39,20 @@ public class BulkIndexFilter {
         args: none yet
          */
         if (args.length != 2) {
-            System.err.println("Usage: " + BulkIndexFilter.class.getSimpleName() + " <origin> <collection>");
+            System.err.println("Usage: " + BulkIndexFilter.class.getSimpleName() + " <collection> <loadId>");
             System.exit(1);
         }
-        String origin = args[0];
-        String collection = args[1];
+        String collection = args[0];
+        String loadId = args[1];
 
         BufferedReader reader = null;
         reader = new BufferedReader(new InputStreamReader(System.in));
         String data = null;
         try {
             while ((data = reader.readLine()) != null) {
-                Triple triple = new Triple(UUID.randomUUID().toString());
-                triple.setText(data);
-                triple.setOrigin(origin);
-                triple.setCollection(collection);
-                System.out.print(asBulkIndex(triple));
+                // todo since the ID is assigned by the store, we really can't do this here!
+                Triple triple = TripleHelper.makeTriple(data, collection, loadId);
+                System.out.print(ElasticCommandBuilder.asBulkIndex(triple));
             }
         } finally {
             try {
@@ -65,25 +63,4 @@ public class BulkIndexFilter {
         }
     }
 
-    /**
-     * write out the bulk load command for the given triple document.
-     *
-     * @param triple
-     */
-    public static String asBulkIndex(Triple triple) throws JsonProcessingException {
-        StringBuilder sb = new StringBuilder();
-
-       /*
-        {"index":{}}
-        {"text":"..","origin":"...","collection":"...",...}
-         */
-        triple.put("subj", TripleHelper.getSubject(triple.getText()));
-        triple.put("pred", TripleHelper.getPredicate(triple.getText()));
-        triple.put("obj", TripleHelper.getObjectFragment(triple.getText()));
-
-        sb.append("{\"index\":{\"_id\":\"").append(triple.getId()).append("\"}}").append('\n');
-        String json = om.writeValueAsString(triple);
-        sb.append(json).append('\n');
-        return sb.toString();
-    }
 }

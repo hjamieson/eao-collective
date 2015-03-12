@@ -34,6 +34,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.oclc.eao.collective.api.model.Triple;
 import org.oclc.eao.collective.indexer.BulkIndexFilter;
+import org.oclc.eao.collective.indexer.ElasticCommandBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,8 +81,6 @@ public class BulkIndexer extends Configured implements Tool {
 
         Scan scan = new Scan();
         scan.addFamily(CF_DATA);
-//        scan.addColumn(CF_DATA, "entityId".getBytes());
-//        scan.addColumn(CF_DATA, "rowKey".getBytes());
         scan.setFilter(makeFilters(args));
         scan.setCaching(500);
         scan.setCacheBlocks(false);
@@ -116,13 +115,16 @@ public class BulkIndexer extends Configured implements Tool {
             String text = Bytes.toString(value.getValue(CF_DATA, "text".getBytes()));
             String rowKey = Bytes.toString(key.get());
             NavigableMap<byte[], byte[]> familyMap = value.getFamilyMap(CF_DATA);
-            Triple t = new Triple(rowKey);
+            Triple t = new Triple();
             for (Map.Entry<byte[], byte[]> me : familyMap.entrySet()) {
                 t.put(Bytes.toString(me.getKey()), Bytes.toString(me.getValue()));
             }
-            outVal.set(BulkIndexFilter.asBulkIndex(t));
+            // note - asBulkIndex adds a CRLF at the end of the index command that we must remove before we
+            // write it to prevent the outputformat from adding a NL in the output between commands.
+            String spam = ElasticCommandBuilder.asBulkIndex(t);
+            spam = spam.substring(0, spam.length()-1);
+            outVal.set(spam);
             context.write(NullWritable.get(), outVal);
-
         }
     }
 

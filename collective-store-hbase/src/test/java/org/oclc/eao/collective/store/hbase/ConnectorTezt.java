@@ -16,6 +16,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.model.Triple;
 
 import java.io.IOException;
@@ -70,10 +71,7 @@ public class ConnectorTezt {
     }
 
     private Triple getTriple(String id) {
-        Triple triple = new Triple(id);
-        triple.setText("<subject><predicate><object> .");
-        triple.setOrigin("junit");
-        triple.setCollection("junit");
+        Triple triple = TripleHelper.makeTriple("<subject><predicate><object> .","test","555");
         triple.put("alpha","one");
         triple.put("beta","two");
         triple.put("gamma","three");

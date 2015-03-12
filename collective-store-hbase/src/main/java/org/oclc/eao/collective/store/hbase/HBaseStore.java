@@ -74,7 +74,7 @@ public class HBaseStore implements NtStore {
         Put put = new Put(Bytes.toBytes(nt.getId()));
         put.add(DEFAULT_CF, Triple.ID_TAG.getBytes(), nt.getId().getBytes());
         put.add(DEFAULT_CF, Triple.TEXT_TAG.getBytes(), nt.getText().getBytes());
-        put.add(DEFAULT_CF, Triple.ORIGIN_TAG.getBytes(), nt.getOrigin().getBytes());
+        put.add(DEFAULT_CF, Triple.LOADID_TAG.getBytes(), nt.getLoadId().getBytes());
         put.add(DEFAULT_CF, Triple.WEIGHT_TAG.getBytes(), Bytes.toBytes(nt.getWeight()));
         for (Map.Entry<String, String> e : nt.entrySet()) {
             put.add(DEFAULT_CF, e.getKey().getBytes(), e.getValue().getBytes());

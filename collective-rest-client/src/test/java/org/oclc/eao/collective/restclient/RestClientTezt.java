@@ -33,7 +33,7 @@ public class RestClientTezt {
         RestClient restClient = new RestClient("http://localhost:8080/collective");
         Triple triple = new Triple();
         triple.setText("sample test data");
-        triple.setOrigin("junit");
+        triple.setLoadId("junit");
         triple.setCollection("junit");
         URI location = restClient.post(triple);
         assertThat(location, notNullValue());
@@ -48,7 +48,7 @@ public class RestClientTezt {
         RestClient restClient = new RestClient("http://localhost:8080/collective");
         Triple triple = new Triple();
         triple.setText("sample test data");
-        triple.setOrigin("junit");
+        triple.setLoadId("junit");
         triple.setCollection("junit");
         URI location = restClient.post(triple);
         assertThat(location, notNullValue());
@@ -56,11 +56,11 @@ public class RestClientTezt {
         Triple findMe = restClient.get(location);
         assertThat(findMe, notNullValue());
         assertThat(findMe.getText(), equalTo("sample test data"));
-        assertThat(findMe.getOrigin(), equalTo("junit"));
+        assertThat(findMe.getLoadId(), equalTo("junit"));
         findMe = restClient.get(findMe.getId());
         assertThat(findMe, notNullValue());
         assertThat(findMe.getText(), equalTo("sample test data"));
-        assertThat(findMe.getOrigin(), equalTo("junit"));
+        assertThat(findMe.getLoadId(), equalTo("junit"));
         restClient.delete(findMe);
     }
 
@@ -70,7 +70,7 @@ public class RestClientTezt {
         restClient.setEndpoint("/noop");
         Triple triple = new Triple();
         triple.setText("sample test data");
-        triple.setOrigin("junit");
+        triple.setLoadId("junit");
         triple.setCollection("junit");
         URI location = restClient.post(triple);
         assertThat(location, notNullValue());
