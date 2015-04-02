@@ -9,7 +9,7 @@
  *
  ******************************************************************************************************************/
 
-package org.oclc.eao.collective.mr;
+package org.oclc.eao.collective.store.mr;
 
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
@@ -34,6 +34,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.model.Triple;
 import org.oclc.eao.collective.indexer.ElasticCommandBuilder;
+import org.oclc.eao.collective.store.hbase.HBaseStore;
 import org.oclc.eao.collective.store.hbase.IdFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +97,7 @@ public class BulkTripleLoader extends Configured implements Tool {
             if (TripleHelper.isWellFormed(text)) {
                 Triple triple = TripleHelper.makeTriple(text, collection, loadId);
                 triple.setId(IdFactory.getNext());
-                Put put = getPut(triple);
+                Put put = HBaseStore.getPut(triple);
                 collective.put(put);
                 context.getCounter("Collective", "successful PUTs").increment(1l);
 
@@ -113,18 +114,6 @@ public class BulkTripleLoader extends Configured implements Tool {
         }
     }
 
-    private static Put getPut(Triple nt) {
-        Put put = new Put(Bytes.toBytes(nt.getId()));
-        put.add(DEFAULT_CF, Triple.ID_TAG.getBytes(), nt.getId().getBytes());
-        put.add(DEFAULT_CF, Triple.TEXT_TAG.getBytes(), nt.getText().getBytes());
-        put.add(DEFAULT_CF, Triple.LOADID_TAG.getBytes(), nt.getLoadId().getBytes());
-        put.add(DEFAULT_CF, Triple.COLLECTION_TAG.getBytes(), nt.getCollection().getBytes());
-        put.add(DEFAULT_CF, Triple.WEIGHT_TAG.getBytes(), Bytes.toBytes(nt.getWeight()));
-        for (Map.Entry<String, String> e : nt.entrySet()) {
-            put.add(DEFAULT_CF, e.getKey().getBytes(), e.getValue().getBytes());
-        }
-        return put;
-    }
 
     public static void main(String[] args) {
         try {

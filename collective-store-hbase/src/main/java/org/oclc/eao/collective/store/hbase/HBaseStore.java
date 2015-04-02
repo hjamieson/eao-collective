@@ -1,16 +1,20 @@
-/****************************************************************************************************************
- *
- *  Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in 
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
- *
- ******************************************************************************************************************/
+/**
+ * *************************************************************************************************************
+ * <p/>
+ * Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
+ * <p/>
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
+ * <p/>
+ * ****************************************************************************************************************
+ */
 
 package org.oclc.eao.collective.store.hbase;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
@@ -22,6 +26,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.oclc.eao.collective.api.domain.NtStore;
+import org.oclc.eao.collective.api.model.ObjectHolder;
 import org.oclc.eao.collective.api.model.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +49,15 @@ public class HBaseStore implements NtStore {
     private final HConnection hConnection;
     private Configuration config;
     private String tableName = "eao_collective";
+
+    public static final byte[] ID_CQ = "id".getBytes();
+    public static final byte[] SUBJ_CQ = "subj".getBytes();
+    public static final byte[] PRED_CQ = "pred".getBytes();
+    public static final byte[] OBJ_CQ = "obj".getBytes();
+    public static final byte[] WEIGHT_CQ = "weight".getBytes();
+    public static final byte[] COLLECTION_CQ = "collection".getBytes();
+    public static final byte[] LOADID_CQ = "loadId".getBytes();
+
 
     public HBaseStore(Configuration config) {
         try {
@@ -71,14 +85,21 @@ public class HBaseStore implements NtStore {
     }
 
     public static Put getPut(Triple nt) {
+        ObjectMapper om = new ObjectMapper();
+
         Put put = new Put(Bytes.toBytes(nt.getId()));
-        put.add(DEFAULT_CF, Triple.ID_TAG.getBytes(), nt.getId().getBytes());
-        put.add(DEFAULT_CF, Triple.TEXT_TAG.getBytes(), nt.getText().getBytes());
-        put.add(DEFAULT_CF, Triple.LOADID_TAG.getBytes(), nt.getLoadId().getBytes());
-        put.add(DEFAULT_CF, Triple.WEIGHT_TAG.getBytes(), Bytes.toBytes(nt.getWeight()));
-        for (Map.Entry<String, String> e : nt.entrySet()) {
-            put.add(DEFAULT_CF, e.getKey().getBytes(), e.getValue().getBytes());
+        put.add(DEFAULT_CF, ID_CQ, nt.getId().getBytes());
+        put.add(DEFAULT_CF, SUBJ_CQ, nt.getSubject().getBytes());
+        put.add(DEFAULT_CF, PRED_CQ, nt.getPredicate().getBytes());
+        try {
+            put.add(DEFAULT_CF, OBJ_CQ, om.writeValueAsBytes(nt.getObject()));
+        } catch (JsonProcessingException e) {
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
+        put.add(DEFAULT_CF, COLLECTION_CQ, nt.getCollection().toString().getBytes());
+        put.add(DEFAULT_CF, LOADID_CQ, nt.getLoadId().getBytes());
+        put.add(DEFAULT_CF, WEIGHT_CQ, Bytes.toBytes(nt.getWeight()));
         return put;
     }
 
@@ -90,13 +111,7 @@ public class HBaseStore implements NtStore {
             hTable = hConnection.getTable(tableName);
             Result result = hTable.get(get);
             if (!result.isEmpty()) {
-                Triple resp = new Triple();
-                resp.setId(result.getRow().toString());
-                // get all columns in data family
-                NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(DEFAULT_CF);
-                for (Map.Entry<byte[], byte[]> v : familyMap.entrySet()) {
-                    resp.put(Bytes.toString(v.getKey()), Bytes.toString(v.getValue()));
-                }
+                Triple resp = getTripleFromResult(result);
                 return resp;
             } else {
                 return null;
@@ -104,6 +119,26 @@ public class HBaseStore implements NtStore {
         } finally {
             hTable.close();
         }
+    }
+
+    public static Triple getTripleFromResult(Result result) {
+        ObjectMapper om = new ObjectMapper();
+        Triple resp = new Triple();
+        resp.setId(result.getRow().toString());
+        // get all columns in data family
+        resp.setSubject(Bytes.toString(result.getValue(DEFAULT_CF, SUBJ_CQ)));
+        resp.setPredicate(Bytes.toString(result.getValue(DEFAULT_CF, PRED_CQ)));
+        // todo need to reload objectholder objects!
+        try {
+            resp.setObject(om.readValue(result.getValue(DEFAULT_CF, OBJ_CQ), ObjectHolder.class));
+        } catch (IOException e) {
+            // todo do something interesting; for now, we just bail on the value.
+            LOG.error(e.getMessage(), e);
+        }
+        resp.setWeight(Bytes.toDouble(result.getValue(DEFAULT_CF, WEIGHT_CQ)));
+        resp.setCollection(Bytes.toString(result.getValue(DEFAULT_CF, COLLECTION_CQ)));
+        resp.setLoadId(Bytes.toString(result.getValue(DEFAULT_CF, LOADID_CQ)));
+        return resp;
     }
 
     @Override

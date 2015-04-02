@@ -23,39 +23,19 @@ public class NtService {
 
     private NtStore ntStore;
 
-    public Triple create(Map<String, String> map) throws IOException {
-        Validate.isTrue(!map.containsKey(Triple.ID_TAG),TRIPLE_ALREADY_PERSISTED);
-        Validate.notEmpty(map.get(Triple.LOADID_TAG),"no LOADID tag found");
-        Validate.notEmpty(map.get(Triple.TEXT_TAG),"no TEXT tag found");
-        Validate.notEmpty(map.get(Triple.COLLECTION_TAG), "no COLLECTION tag found");
-        Triple triple = new Triple();
-        triple.setId(UUID.randomUUID().toString());
-        map.remove(Triple.ID_TAG);
-        triple.setLoadId(map.get(Triple.LOADID_TAG));
-        map.remove(Triple.LOADID_TAG);
-        triple.setText(map.get(Triple.TEXT_TAG));
-        map.remove(Triple.TEXT_TAG);
-        if (map.containsKey(Triple.WEIGHT_TAG)) {
-            triple.setWeight(map.get(Triple.WEIGHT_TAG));
-            map.remove(Triple.WEIGHT_TAG);
-        }
+    public Triple create(Triple nt) throws IOException {
+        Validate.isTrue(nt.getId()==null,TRIPLE_ALREADY_PERSISTED);
+        Validate.notEmpty(nt.getLoadId(),"loadId missing");
+        Validate.notEmpty(nt.getSubject(),"subject missing");
+        Validate.notEmpty(nt.getSubject(),"subject missing");
+        Validate.notEmpty(nt.getPredicate(),"predicate missing");
+        Validate.notNull(nt.getObject(), "object missing");
+        Validate.notEmpty(nt.getCollection(), "no COLLECTION tag found");
+        nt.setId(UUID.randomUUID().toString());
 
-        triple.putAll(map);
-
-        ntStore.save(triple);
-        return triple;
+        ntStore.save(nt);
+        return nt;
     }
-
-    public Triple create(Triple triple) throws IOException {
-        Validate.isTrue(triple.getId() == null, TRIPLE_ALREADY_PERSISTED);
-        Validate.notEmpty(triple.getLoadId(), "missing N-Triple loadId");
-        Validate.notEmpty(triple.getText(), "missing N-Triple text");
-        Validate.notEmpty(triple.getCollection(), "missing N-Triple collection name");
-        triple.setId(UUID.randomUUID().toString());
-        ntStore.save(triple);
-        return triple;
-    }
-
 
     public Triple get(String id) throws IOException {
         return ntStore.get(id);

@@ -11,6 +11,7 @@
 
 package org.oclc.eao.collective.restclient;
 
+import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.model.Triple;
 
 import java.io.BufferedReader;
@@ -85,10 +86,7 @@ public class BatchLoader {
 
         @Override
         public void run() {
-            Triple t = new Triple();
-            t.setText(text);
-            t.setLoadId(loadId);
-            t.setCollection(collection);
+            Triple t = TripleHelper.makeTriple(text, collection, loadId);
             restClient.post(t);
         }
     }

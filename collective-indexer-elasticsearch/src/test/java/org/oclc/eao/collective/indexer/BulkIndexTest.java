@@ -32,7 +32,7 @@ import static org.junit.Assert.assertThat;
 public class BulkIndexTest {
     @Test
     public void testMapper() throws JsonProcessingException {
-        Triple t = TripleHelper.makeTriple("<foo><bar><baz> .","test","714");
+        Triple t = TripleHelper.makeTriple("<foo><bar> \"Test bulk index test\" .","test","714");
         String json = TripleHelper.toJSON(t);
         System.out.println(json);
         assertThat(json.contains("\n"), is(false));
@@ -40,7 +40,7 @@ public class BulkIndexTest {
 
     @Test
     public void testBulkIndexFilter(){
-        Triple t = TripleHelper.makeTriple("<foo><bar><baz> .","junit","404");
+        Triple t = TripleHelper.makeTriple("<foo><bar> \"jes nes se pa\"@fr .","junit","404");
         String json = ElasticCommandBuilder.asBulkIndex(t);
         assertThat(json.charAt(json.length()-2), not(equalTo('\n')));
         System.out.println(json);

@@ -72,25 +72,17 @@ public class ConnectorTezt {
 
     private Triple getTriple(String id) {
         Triple triple = TripleHelper.makeTriple("<subject><predicate><object> .","test","555");
-        triple.put("alpha","one");
-        triple.put("beta","two");
-        triple.put("gamma","three");
         return triple;
     }
 
     @Test
     public void writeReadTest(){
         Triple triple = getTriple("barfoo");
-        triple.put("alpha","uno");
-        triple.put("beta","dos");
-        triple.put("gamma","tres");
-
         try {
             store.save(triple);
             Triple findMe = store.get("barfoo");
             store.delete("barfoo");
             assertThat(findMe, notNullValue());
-            assertThat(findMe.get("beta"), equalTo("dos"));
         } catch (IOException e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -100,9 +92,6 @@ public class ConnectorTezt {
     @Test
     public void testDelete(){
         Triple triple = getTriple("klaatu");
-        triple.put("alpha","einer");
-        triple.put("beta","zwei");
-        triple.put("gamma","drei");
 
         try {
             store.save(triple);

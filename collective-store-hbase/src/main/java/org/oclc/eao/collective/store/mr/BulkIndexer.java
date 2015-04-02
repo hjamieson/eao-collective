@@ -9,9 +9,8 @@
  *
  ******************************************************************************************************************/
 
-package org.oclc.eao.collective.mr;
+package org.oclc.eao.collective.store.mr;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -28,13 +27,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.oclc.eao.collective.api.model.Triple;
-import org.oclc.eao.collective.indexer.BulkIndexFilter;
 import org.oclc.eao.collective.indexer.ElasticCommandBuilder;
+import org.oclc.eao.collective.store.hbase.HBaseStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +53,8 @@ public class BulkIndexer extends Configured implements Tool {
     private static final Logger LOG = LoggerFactory.getLogger(BulkIndexer.class);
     public static final byte[] CF_DATA = "data".getBytes();
     public static final String JOB_NAME = "Bulk Index Dump";
-    public static final byte[] CQ_ORIGIN = "origin".getBytes();
-    public static final String CQ_COLLECTION = "collection";
+    public static final byte[] CQ_LOADID = "loadId".getBytes();
+    public static final byte[] CQ_COLLECTION = "collection".getBytes();
 
     public static void main(String[] args) throws Exception {
         System.exit(ToolRunner.run(new BulkIndexer(), args));
@@ -65,12 +63,12 @@ public class BulkIndexer extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         if (args.length != 3) {
-            LOG.error("Usage:" + BulkIndexer.class.getSimpleName() + " <origin> <collection> <output-path>");
+            LOG.error("Usage:" + BulkIndexer.class.getSimpleName() + " <loadId> <collection> <output-path>");
             return 1;
         }
         /*
         args:
-        0 = origin
+        0 = loadId
         1 = collection
         2 = output path
          */
@@ -99,8 +97,8 @@ public class BulkIndexer extends Configured implements Tool {
     }
 
     private Filter makeFilters(String[] args) {
-        SingleColumnValueFilter c1 = new SingleColumnValueFilter(CF_DATA, CQ_ORIGIN, CompareFilter.CompareOp.EQUAL, args[0].getBytes());
-        SingleColumnValueFilter c2 = new SingleColumnValueFilter(CF_DATA, CQ_COLLECTION.getBytes(), CompareFilter.CompareOp.EQUAL, args[1].getBytes());
+        SingleColumnValueFilter c1 = new SingleColumnValueFilter(CF_DATA, CQ_LOADID, CompareFilter.CompareOp.EQUAL, args[0].getBytes());
+        SingleColumnValueFilter c2 = new SingleColumnValueFilter(CF_DATA, CQ_COLLECTION, CompareFilter.CompareOp.EQUAL, args[1].getBytes());
         return new FilterList(FilterList.Operator.MUST_PASS_ALL, c1, c2);
     }
 
@@ -112,16 +110,10 @@ public class BulkIndexer extends Configured implements Tool {
             /*
              * we get a row that has the triples we want to emit
              */
-            String text = Bytes.toString(value.getValue(CF_DATA, "text".getBytes()));
-            String rowKey = Bytes.toString(key.get());
-            NavigableMap<byte[], byte[]> familyMap = value.getFamilyMap(CF_DATA);
-            Triple t = new Triple();
-            for (Map.Entry<byte[], byte[]> me : familyMap.entrySet()) {
-                t.put(Bytes.toString(me.getKey()), Bytes.toString(me.getValue()));
-            }
+            Triple triple = HBaseStore.getTripleFromResult(value);
             // note - asBulkIndex adds a CRLF at the end of the index command that we must remove before we
             // write it to prevent the outputformat from adding a NL in the output between commands.
-            String spam = ElasticCommandBuilder.asBulkIndex(t);
+            String spam = ElasticCommandBuilder.asBulkIndex(triple);
             spam = spam.substring(0, spam.length()-1);
             outVal.set(spam);
             context.write(NullWritable.get(), outVal);

@@ -9,43 +9,41 @@
  *
  ******************************************************************************************************************/
 
-package org.oclc.eao.collective.indexer;
+package org.oclc.eao.collective.api.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Test;
 import org.oclc.eao.collective.api.TripleHelper;
-import org.oclc.eao.collective.api.model.Triple;
+
+import java.io.IOException;
+
+import static org.junit.Assert.fail;
 
 /**
  * Description:
  * User: jamiesoh
- * Date: 3/11/15
- * Time: 7:10 PM
+ * Date: 4/1/15
+ * Time: 8:07 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class ElasticCommandBuilder {
-    private static final ObjectMapper om = new ObjectMapper();
-
-    /**
-     * write out the bulk load command for the given triple document.
-     *
-     * @param triple
-     */
-    public static String asBulkIndex(Triple triple) {
-        StringBuilder sb = new StringBuilder();
-
-       /*
-        {"index":{}}
-        {"subj":"..","loadId":"...","collection":"...",...}
-         */
-        sb.append("{\"index\":{\"_id\":\"").append(triple.getId()).append("\"}}").append('\n');
+public class JsonTest {
+    @Test
+    public void testSerializeLiterals(){
+        Triple nt = new Triple("http://hugh.org/123","http://schema.org/name","Seriously Good-Looking","en");
+        nt.setCollection("K-Mart");
+        nt.setLoadId("testing");
+        ObjectMapper om = new ObjectMapper();
         try {
-            String json = om.writeValueAsString(triple);
-            sb.append(json).append('\n');
-            return sb.toString();
+            String json = om.writeValueAsString(nt);
+            System.out.println(json);
+            om.readValue(json, Triple.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            fail(e.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(e.getMessage());
         }
     }
-
 }

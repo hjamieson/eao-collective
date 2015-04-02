@@ -53,12 +53,12 @@ public class TripleController {
     private IndexClient indexClient;
 
     @RequestMapping(method = RequestMethod.POST)
-    ResponseEntity<Void> post(@RequestBody HashMap<String, String> map, ServletUriComponentsBuilder uriBuilder) throws IOException {
-        LOG.trace("post for {} received", map);
+    ResponseEntity<Void> post(@RequestBody Triple triple, ServletUriComponentsBuilder uriBuilder) throws IOException {
+        LOG.trace("post for {} received", triple);
 
         ResponseEntity<Void> response = null;
         try {
-            Triple triple = ntService.create(map);
+            Triple result = ntService.create(triple);
             HttpHeaders headers = new HttpHeaders();
             UriComponents uri = uriBuilder.path("/triple/{id}").build().expand(triple.getId());
             headers.setLocation(uri.toUri());
@@ -66,7 +66,7 @@ public class TripleController {
 
             // index this data if active:
             if (activeIndex) {
-                indexClient.index(triple);
+                indexClient.index(result);
             }
         } catch (IllegalArgumentException e) {
             LOG.error("POST for triple failed; reason={}", e.getMessage());
@@ -76,7 +76,7 @@ public class TripleController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/{id}")
-    Map<String, String> get(@PathVariable String id) throws IOException {
+    Triple get(@PathVariable String id) throws IOException {
         return ntService.get(id);
     }
 

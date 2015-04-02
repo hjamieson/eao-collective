@@ -1,20 +1,20 @@
-/****************************************************************************************************************
- *
- *  Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in 
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
- *
- ******************************************************************************************************************/
+/**
+ * *************************************************************************************************************
+ * <p/>
+ * Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
+ * <p/>
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
+ * <p/>
+ * ****************************************************************************************************************
+ */
 
 package org.oclc.eao.collective.api.model;
 
-import org.apache.commons.lang.Validate;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.oclc.eao.collective.api.TripleHelper;
 
 /**
  * Description: The venerable RDF triple as it exists in this collective framework.  Its really just a hashmap.
@@ -23,83 +23,102 @@ import java.util.Map;
  * Time: 6:36 AM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class Triple extends HashMap<String, String> {
-    public static final String ID_TAG = "id";
-    public static final String LOADID_TAG = "loadId";
-    public static final String TEXT_TAG = "text";
-    public static final String WEIGHT_TAG = "weight";
-    public static final String COLLECTION_TAG = "collection";
-    public static final String DEFAULT_WEIGHT = "0.8";
+public class Triple {
+    public static final double DEFAULT_WEIGHT = 0.5;
+
+    private String id;
+    private String subject;
+    private String predicate;
+    private ObjectHolder object;
+    private double weight;
+    private String collection;
+    private String loadId;
 
     public Triple() {
-        super();
         setWeight(DEFAULT_WEIGHT);
     }
 
-//    public Triple(String id) {
-//        this();
-//        setId(id);
-//    }
-
-    public Triple(Map<? extends String, ? extends String> m) {
-        super(m);
+    public Triple(String subj, String pred, String literal) {
+        setSubject(subj);
+        setPredicate(pred);
+        setObject(new SimpleLiteral(literal));
         setWeight(DEFAULT_WEIGHT);
     }
 
-//    public Triple(String id, Map<? extends String, ? extends String> m) {
-//        super(m);
-//        setId(id);
-//        setWeight(DEFAULT_WEIGHT);
-//    }
+    public Triple(String subj, String pred, String literal, String lang) {
+        setSubject(subj);
+        setPredicate(pred);
+        setObject(new SimpleLiteral(literal, lang));
+        setWeight(DEFAULT_WEIGHT);
+    }
 
+    public Triple(String subject, String predicate, ObjectHolder object, double weight, String collection, String loadId) {
+        this.subject = subject;
+        this.predicate = predicate;
+        this.object = object;
+        this.weight = weight;
+        this.collection = collection;
+        this.loadId = loadId;
+    }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("triple{");
-        sb.append("id:").append(getId());
-        sb.append("}");
-        return sb.toString();
+        return TripleHelper.toJSON(this);
     }
 
     public String getId() {
-        return get(ID_TAG);
+        return id;
     }
 
     public void setId(String id) {
-        put(ID_TAG, id);
+        this.id = id;
     }
 
-    public String getLoadId() {
-        return get(LOADID_TAG);
+    public String getSubject() {
+        return subject;
     }
 
-    public void setLoadId(String loadId) {
-        put(LOADID_TAG, loadId);
+    public void setSubject(String subject) {
+        this.subject = subject;
     }
 
-    public String getText() {
-        return get(TEXT_TAG);
+    public String getPredicate() {
+        return predicate;
     }
 
-    public void setText(String text) {
-        put(TEXT_TAG, text);
+    public void setPredicate(String predicate) {
+        this.predicate = predicate;
     }
 
-    public String getWeight() {
-        return get(WEIGHT_TAG);
+    public ObjectHolder getObject() {
+        return object;
     }
 
-    public void setWeight(String weight) {
-        Validate.isTrue(weight.matches("(0\\.)?[0-9]+"), String.format("invalid weight specification: %1$s", weight));
-        put(WEIGHT_TAG, weight);
+    public void setObject(ObjectHolder object) {
+        this.object = object;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
     }
 
     public String getCollection() {
-        return get(COLLECTION_TAG);
+        return collection;
     }
 
     public void setCollection(String collection) {
-        put(COLLECTION_TAG, collection);
+        this.collection = collection;
+    }
+
+    public String getLoadId() {
+        return loadId;
+    }
+
+    public void setLoadId(String loadId) {
+        this.loadId = loadId;
     }
 }

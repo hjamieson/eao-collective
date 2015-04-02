@@ -12,6 +12,7 @@
 package org.oclc.eao.collective.restclient;
 
 import org.junit.Test;
+import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.model.Triple;
 
 import java.net.URI;
@@ -31,10 +32,7 @@ public class RestClientTezt {
     @Test
     public void testPost() {
         RestClient restClient = new RestClient("http://localhost:8080/collective");
-        Triple triple = new Triple();
-        triple.setText("sample test data");
-        triple.setLoadId("junit");
-        triple.setCollection("junit");
+        Triple triple = TripleHelper.makeTriple("<foo> <bar> \"testing\" .", "junit", "junit");
         URI location = restClient.post(triple);
         assertThat(location, notNullValue());
         System.out.println("location was: " + location.toString());
@@ -46,20 +44,17 @@ public class RestClientTezt {
     @Test
     public void testGet(){
         RestClient restClient = new RestClient("http://localhost:8080/collective");
-        Triple triple = new Triple();
-        triple.setText("sample test data");
-        triple.setLoadId("junit");
-        triple.setCollection("junit");
+        Triple triple = TripleHelper.makeTriple("<foo> <bar> \"testing\" .", "junit", "junit");
         URI location = restClient.post(triple);
         assertThat(location, notNullValue());
 
         Triple findMe = restClient.get(location);
         assertThat(findMe, notNullValue());
-        assertThat(findMe.getText(), equalTo("sample test data"));
+        assertThat(findMe.getSubject(), equalTo("<foo>"));
         assertThat(findMe.getLoadId(), equalTo("junit"));
         findMe = restClient.get(findMe.getId());
         assertThat(findMe, notNullValue());
-        assertThat(findMe.getText(), equalTo("sample test data"));
+        assertThat(findMe.getPredicate(), equalTo("<bar>"));
         assertThat(findMe.getLoadId(), equalTo("junit"));
         restClient.delete(findMe);
     }
@@ -68,12 +63,10 @@ public class RestClientTezt {
     public void testNoopEndpoint(){
         RestClient restClient = new RestClient("http://localhost:8080/collective");
         restClient.setEndpoint("/noop");
-        Triple triple = new Triple();
-        triple.setText("sample test data");
+        Triple triple = TripleHelper.makeTriple("<foo> <bar> \"testing\" .", "junit", "junit");
         triple.setLoadId("junit");
         triple.setCollection("junit");
         URI location = restClient.post(triple);
         assertThat(location, notNullValue());
-
     }
 }

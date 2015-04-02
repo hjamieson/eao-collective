@@ -1,13 +1,15 @@
-/****************************************************************************************************************
- *
- *  Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in 
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
- *
- ******************************************************************************************************************/
+/**
+ * *************************************************************************************************************
+ * <p/>
+ * Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
+ * <p/>
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
+ * <p/>
+ * ****************************************************************************************************************
+ */
 
 package org.oclc.eao.collective.api.model;
 
@@ -17,6 +19,7 @@ import org.oclc.eao.collective.api.TripleHelper;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -66,11 +69,11 @@ public class TripleHelperTest {
 
     @Test
     public void testGetLiteralType() {
-        assertThat(TripleHelper.getObjectType(triple[1]), equalTo(TripleHelper.ObjectType.URI));
-        assertThat(TripleHelper.getObjectType(triple[2]), equalTo(TripleHelper.ObjectType.LITERAL));
-        assertThat(TripleHelper.getObjectType(triple[3]), equalTo(TripleHelper.ObjectType.LITERAL_WITH_LANG));
-        assertThat(TripleHelper.getObjectType(triple[4]), equalTo(TripleHelper.ObjectType.LITERAL_WITH_TYPE));
-        assertThat(TripleHelper.getObjectType(triple[5]), equalTo(TripleHelper.ObjectType.LITERAL_WITH_TYPE));
+        assertThat(TripleHelper.getObjectType(triple[1]), equalTo(ObjectHolder.Type.RESOURCE));
+        assertThat(TripleHelper.getObjectType(triple[2]), equalTo(ObjectHolder.Type.LITERAL));
+        assertThat(TripleHelper.getObjectType(triple[3]), equalTo(ObjectHolder.Type.LITERAL_WITH_LANG));
+        assertThat(TripleHelper.getObjectType(triple[4]), equalTo(ObjectHolder.Type.TYPED_LITERAL));
+        assertThat(TripleHelper.getObjectType(triple[5]), equalTo(ObjectHolder.Type.TYPED_LITERAL));
     }
 
     @Test
@@ -96,19 +99,32 @@ public class TripleHelperTest {
     }
 
     @Test
-    public void testBadFactory(){
-        Triple t1 = TripleHelper.makeTriple("<foo><bar><baz> .","hughs","12345");
+    public void testBadFactory() {
+        String text = "<foo> <bar> \"Some amazing wisdom from Willie Nelson\" .";
+        Triple t1 = TripleHelper.makeTriple(text, "hughs", "12345");
         try {
-            TripleHelper.makeTriple("<foo <bar><baz> .","hughs","12345");
+            TripleHelper.makeTriple("<foo <bar><baz> .", "hughs", "12345");
             fail("should throw");
         } catch (Exception e) {
         }
         try {
-            TripleHelper.makeTriple("<foo> <bar><baz> ","hughs","12345");
+            TripleHelper.makeTriple("<foo> <bar><baz> ", "hughs", "12345");
             fail("missing .; should throw");
         } catch (Exception e) {
         }
+    }
 
+    @Test
+    public void testTaggedLiteral() {
+        try {
+            Triple tt = TripleHelper.makeTriple("<http://hugh.org> <http://schema.org/name> \"Love is a nose and you better not pick it\"@en .", "test", "nowhere");
+            assertTrue(tt.getObject() instanceof SimpleLiteral);
+            SimpleLiteral obj = (SimpleLiteral) tt.getObject();
+            assertThat(obj.getLang(), equalTo("en"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            fail(t.getMessage());
+        }
     }
 
 }

@@ -1,19 +1,23 @@
-/****************************************************************************************************************
- *
- *  Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in 
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
- *
- ******************************************************************************************************************/
+/**
+ * *************************************************************************************************************
+ * <p/>
+ * Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
+ * <p/>
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
+ * <p/>
+ * ****************************************************************************************************************
+ */
 
 package org.oclc.eao.collective.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.Validate;
+import org.oclc.eao.collective.api.model.ObjectHolder;
+import org.oclc.eao.collective.api.model.SimpleLiteral;
 import org.oclc.eao.collective.api.model.Triple;
 
 import java.util.regex.Matcher;
@@ -36,9 +40,9 @@ public class TripleHelper {
     public static Pattern NT_LITERAL_TYPE = Pattern.compile("<([^>]+)>\\s*<([^>]+)>\\s*(\".*) [.]\\s*$");
 
     // object patterns for helper methods
-    public static Pattern NT_OBJ_WITH_LANG = Pattern.compile("^.+@(..)$");
-    public static Pattern NT_OBJ_WITH_TYPE = Pattern.compile("^.+\\^{2}(.+)$");
-    public static Pattern NT_OBJ_LITERAL = Pattern.compile("^\".+");
+    public static Pattern FRAG_LITERAL_WITH_LANG = Pattern.compile("^\"(.+)\"@(..)$");
+    public static Pattern FRAG_TYPED_LITERAL = Pattern.compile("^.+\\^{2}(.+)$");
+    public static Pattern FRAG_SIMPLE_LITERAL = Pattern.compile("^\"(.+)\"");
 
     //todo need to handle blank node (_:alice, _:bob)
 
@@ -68,7 +72,7 @@ public class TripleHelper {
             Matcher m = NT_SUBJ_PRED.matcher(nTripleString);
             return (m.matches()) ? m.group(1) : "";
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage()+"::"+nTripleString);
+            throw new RuntimeException(e.getMessage() + "::" + nTripleString);
         }
     }
 
@@ -77,36 +81,44 @@ public class TripleHelper {
         return m.matches() ? m.group(2) : "";
     }
 
+    public static ObjectHolder getObject(String nTripleString) {
+        //todo we only handle text literals here; this needs widening!!
+        ObjectHolder.Type ot = getObjectType(nTripleString);
+        String literal = getObjectFragment(nTripleString);
+        if (ot == ObjectHolder.Type.LITERAL) {
+            return new SimpleLiteral(literal);
+        } else if (ot == ObjectHolder.Type.LITERAL_WITH_LANG) {
+            Matcher m = FRAG_LITERAL_WITH_LANG.matcher(literal);
+            m.matches();
+            return new SimpleLiteral(m.group(1), m.group(2));
+        }
+        throw new UnsupportedOperationException("unsupported object type: " + nTripleString);
+    }
+
     public static String getObjectFragment(String nTripleString) {
         Matcher m = NT_OBJECT_FRAGMENT.matcher(nTripleString);
         return m.matches() ? m.group(1).trim() : "";
     }
 
-    public enum ObjectType {
-        LITERAL,
-        LITERAL_WITH_LANG,
-        LITERAL_WITH_TYPE,
-        URI
-    }
 
-    public static ObjectType getObjectType(String nTripleString) {
+    public static ObjectHolder.Type getObjectType(String nTripleString) {
         String frag = getObjectFragment(nTripleString);
-        if (NT_OBJ_WITH_TYPE.matcher(frag).matches()) {
-            return ObjectType.LITERAL_WITH_TYPE;
-        } else if (NT_OBJ_WITH_LANG.matcher(frag).matches()) {
-            return ObjectType.LITERAL_WITH_LANG;
-        } else if (NT_OBJ_LITERAL.matcher(frag).matches()) {
-            return ObjectType.LITERAL;
+        if (FRAG_TYPED_LITERAL.matcher(frag).matches()) {
+            return ObjectHolder.Type.TYPED_LITERAL;
+        } else if (FRAG_LITERAL_WITH_LANG.matcher(frag).matches()) {
+            return ObjectHolder.Type.LITERAL_WITH_LANG;
+        } else if (FRAG_SIMPLE_LITERAL.matcher(frag).matches()) {
+            return ObjectHolder.Type.LITERAL;
         } else {
-            return ObjectType.URI;
+            return ObjectHolder.Type.RESOURCE;
         }
     }
 
     public static String getLanguage(String nTripleString) {
-        if (getObjectType(nTripleString) == ObjectType.LITERAL_WITH_LANG) {
-            Matcher m = NT_OBJ_WITH_LANG.matcher(getObjectFragment(nTripleString));
+        if (getObjectType(nTripleString) == ObjectHolder.Type.LITERAL_WITH_LANG) {
+            Matcher m = FRAG_LITERAL_WITH_LANG.matcher(getObjectFragment(nTripleString));
             if (m.matches()) {
-                return m.group(1);
+                return m.group(2);
             } else {
                 return "";
             }
@@ -114,16 +126,18 @@ public class TripleHelper {
         throw new IllegalArgumentException("no lang tag available");
     }
 
-    public static Triple makeTriple(String nTripleText, String collection, String loadId){
+    public static Triple makeTriple(String nTripleText, String collection, String loadId) {
         Validate.isTrue(isWellFormed(nTripleText));
         Triple triple = new Triple();
-        triple.setText(nTripleText);
+        triple.setSubject(TripleHelper.getSubject(nTripleText));
+        triple.setPredicate(TripleHelper.getPredicate(nTripleText));
+        triple.setObject(TripleHelper.getObject(nTripleText));
         triple.setCollection(collection);
         triple.setLoadId(loadId);
         return triple;
     }
 
-    public static String toJSON(Triple triple){
+    public static String toJSON(Triple triple) {
         try {
             return objectMapper.writeValueAsString(triple);
         } catch (JsonProcessingException e) {
