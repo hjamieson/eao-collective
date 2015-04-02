@@ -51,11 +51,11 @@ public class RestClientTezt {
         Triple findMe = restClient.get(location);
         assertThat(findMe, notNullValue());
         assertThat(findMe.getSubject(), equalTo("<foo>"));
-        assertThat(findMe.getLoadId(), equalTo("junit"));
+        assertThat(findMe.getInstance(), equalTo("junit"));
         findMe = restClient.get(findMe.getId());
         assertThat(findMe, notNullValue());
         assertThat(findMe.getPredicate(), equalTo("<bar>"));
-        assertThat(findMe.getLoadId(), equalTo("junit"));
+        assertThat(findMe.getInstance(), equalTo("junit"));
         restClient.delete(findMe);
     }
 
@@ -64,7 +64,7 @@ public class RestClientTezt {
         RestClient restClient = new RestClient("http://localhost:8080/collective");
         restClient.setEndpoint("/noop");
         Triple triple = TripleHelper.makeTriple("<foo> <bar> \"testing\" .", "junit", "junit");
-        triple.setLoadId("junit");
+        triple.setInstance("junit");
         triple.setCollection("junit");
         URI location = restClient.post(triple);
         assertThat(location, notNullValue());

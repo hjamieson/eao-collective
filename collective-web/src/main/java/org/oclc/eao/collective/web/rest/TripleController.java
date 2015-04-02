@@ -11,9 +11,11 @@
 
 package org.oclc.eao.collective.web.rest;
 
+import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.domain.NtService;
 import org.oclc.eao.collective.api.model.Triple;
 import org.oclc.eao.collective.indexer.IndexClient;
+import org.oclc.eao.collective.web.model.NTripleText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,4 +90,29 @@ public class TripleController {
         }
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
+
+    @RequestMapping(value="/ntriple", method = RequestMethod.POST)
+    ResponseEntity<Void> ntPost(@RequestBody NTripleText ntriple, ServletUriComponentsBuilder uriBuilder) throws IOException {
+        LOG.trace("POST for {} received", ntriple.getText());
+
+        ResponseEntity<Void> response = null;
+        try {
+            Triple triple = TripleHelper.makeTriple(ntriple.getText(), ntriple.getCollection(), ntriple.getInstance());
+            Triple result = ntService.create(triple);
+            HttpHeaders headers = new HttpHeaders();
+            UriComponents uri = uriBuilder.path("/triple/{id}").build().expand(triple.getId());
+            headers.setLocation(uri.toUri());
+            response = new ResponseEntity<Void>(null, headers, HttpStatus.CREATED);
+
+            // index this data if active:
+            if (activeIndex) {
+                indexClient.index(result);
+            }
+        } catch (IllegalArgumentException e) {
+            LOG.error("POST for triple failed; reason={}", e.getMessage());
+            response = new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+        }
+        return response;
+    }
+
 }

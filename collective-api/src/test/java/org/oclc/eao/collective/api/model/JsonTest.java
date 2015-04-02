@@ -14,7 +14,6 @@ package org.oclc.eao.collective.api.model;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
-import org.oclc.eao.collective.api.TripleHelper;
 
 import java.io.IOException;
 
@@ -30,9 +29,9 @@ import static org.junit.Assert.fail;
 public class JsonTest {
     @Test
     public void testSerializeLiterals(){
-        Triple nt = new Triple("http://hugh.org/123","http://schema.org/name","Seriously Good-Looking","en");
+        Triple nt = new Triple("http://hugh.org/123","http://schema.org/name","\"Seriously Good-Looking\"@en");
         nt.setCollection("K-Mart");
-        nt.setLoadId("testing");
+        nt.setInstance("testing");
         ObjectMapper om = new ObjectMapper();
         try {
             String json = om.writeValueAsString(nt);

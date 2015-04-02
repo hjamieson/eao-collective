@@ -33,8 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
 
 /**
  * Description: Implementation of the NtStore interface that uses HBase as the underlying store.
@@ -91,14 +89,9 @@ public class HBaseStore implements NtStore {
         put.add(DEFAULT_CF, ID_CQ, nt.getId().getBytes());
         put.add(DEFAULT_CF, SUBJ_CQ, nt.getSubject().getBytes());
         put.add(DEFAULT_CF, PRED_CQ, nt.getPredicate().getBytes());
-        try {
-            put.add(DEFAULT_CF, OBJ_CQ, om.writeValueAsBytes(nt.getObject()));
-        } catch (JsonProcessingException e) {
-            LOG.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
+        put.add(DEFAULT_CF, OBJ_CQ, nt.getObject().getBytes());
         put.add(DEFAULT_CF, COLLECTION_CQ, nt.getCollection().toString().getBytes());
-        put.add(DEFAULT_CF, LOADID_CQ, nt.getLoadId().getBytes());
+        put.add(DEFAULT_CF, LOADID_CQ, nt.getInstance().getBytes());
         put.add(DEFAULT_CF, WEIGHT_CQ, Bytes.toBytes(nt.getWeight()));
         return put;
     }
@@ -128,16 +121,10 @@ public class HBaseStore implements NtStore {
         // get all columns in data family
         resp.setSubject(Bytes.toString(result.getValue(DEFAULT_CF, SUBJ_CQ)));
         resp.setPredicate(Bytes.toString(result.getValue(DEFAULT_CF, PRED_CQ)));
-        // todo need to reload objectholder objects!
-        try {
-            resp.setObject(om.readValue(result.getValue(DEFAULT_CF, OBJ_CQ), ObjectHolder.class));
-        } catch (IOException e) {
-            // todo do something interesting; for now, we just bail on the value.
-            LOG.error(e.getMessage(), e);
-        }
+        resp.setObject(Bytes.toString(result.getValue(DEFAULT_CF, OBJ_CQ)));
         resp.setWeight(Bytes.toDouble(result.getValue(DEFAULT_CF, WEIGHT_CQ)));
         resp.setCollection(Bytes.toString(result.getValue(DEFAULT_CF, COLLECTION_CQ)));
-        resp.setLoadId(Bytes.toString(result.getValue(DEFAULT_CF, LOADID_CQ)));
+        resp.setInstance(Bytes.toString(result.getValue(DEFAULT_CF, LOADID_CQ)));
         return resp;
     }
 

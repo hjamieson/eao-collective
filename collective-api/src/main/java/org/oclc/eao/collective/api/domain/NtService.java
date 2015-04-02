@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -25,7 +24,7 @@ public class NtService {
 
     public Triple create(Triple nt) throws IOException {
         Validate.isTrue(nt.getId()==null,TRIPLE_ALREADY_PERSISTED);
-        Validate.notEmpty(nt.getLoadId(),"loadId missing");
+        Validate.notEmpty(nt.getInstance(),"loadId missing");
         Validate.notEmpty(nt.getSubject(),"subject missing");
         Validate.notEmpty(nt.getSubject(),"subject missing");
         Validate.notEmpty(nt.getPredicate(),"predicate missing");

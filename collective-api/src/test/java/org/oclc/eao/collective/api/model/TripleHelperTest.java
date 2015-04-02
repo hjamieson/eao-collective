@@ -68,12 +68,12 @@ public class TripleHelperTest {
 
 
     @Test
-    public void testGetLiteralType() {
-        assertThat(TripleHelper.getObjectType(triple[1]), equalTo(ObjectHolder.Type.RESOURCE));
-        assertThat(TripleHelper.getObjectType(triple[2]), equalTo(ObjectHolder.Type.LITERAL));
-        assertThat(TripleHelper.getObjectType(triple[3]), equalTo(ObjectHolder.Type.LITERAL_WITH_LANG));
-        assertThat(TripleHelper.getObjectType(triple[4]), equalTo(ObjectHolder.Type.TYPED_LITERAL));
-        assertThat(TripleHelper.getObjectType(triple[5]), equalTo(ObjectHolder.Type.TYPED_LITERAL));
+    public void testGetObjectType() {
+        assertThat(TripleHelper.getObjectType(TripleHelper.getObjectFragment(triple[1])), equalTo(ObjectHolder.Type.RESOURCE));
+        assertThat(TripleHelper.getObjectType(TripleHelper.getObjectFragment(triple[2])), equalTo(ObjectHolder.Type.LITERAL));
+        assertThat(TripleHelper.getObjectType(TripleHelper.getObjectFragment(triple[3])), equalTo(ObjectHolder.Type.LITERAL_WITH_LANG));
+        assertThat(TripleHelper.getObjectType(TripleHelper.getObjectFragment(triple[4])), equalTo(ObjectHolder.Type.TYPED_LITERAL));
+        assertThat(TripleHelper.getObjectType(TripleHelper.getObjectFragment(triple[5])), equalTo(ObjectHolder.Type.TYPED_LITERAL));
     }
 
     @Test
@@ -89,12 +89,20 @@ public class TripleHelperTest {
 
     @Test
     public void testGetLiteral() {
+        ObjectHolder holder = TripleHelper.getObjectHolder(TripleHelper.getObjectFragment(triple[2]));
+        assertTrue(holder instanceof SimpleLiteral);
+        assertThat(((SimpleLiteral) holder).getText(), equalTo("\"Fighting Irish\""));
 
+        Triple nt = TripleHelper.makeTriple(this.triple[2], "dummy", "test");
+        assertTrue(nt.getObject().startsWith("\""));
+        assertTrue(nt.getObject().endsWith("\""));
     }
 
     @Test
     public void testGetLiteralLang() {
-        assertThat(TripleHelper.getLanguage(triple[3]), equalTo("en"));
+        ObjectHolder holder = TripleHelper.getObjectHolder(TripleHelper.getObjectFragment(triple[3]));
+        assertTrue(holder instanceof SimpleLiteral);
+        assertThat(((SimpleLiteral)holder).getLang(), equalTo("en"));
 
     }
 
@@ -118,8 +126,8 @@ public class TripleHelperTest {
     public void testTaggedLiteral() {
         try {
             Triple tt = TripleHelper.makeTriple("<http://hugh.org> <http://schema.org/name> \"Love is a nose and you better not pick it\"@en .", "test", "nowhere");
-            assertTrue(tt.getObject() instanceof SimpleLiteral);
-            SimpleLiteral obj = (SimpleLiteral) tt.getObject();
+            assertTrue(tt.getObjectHolder() instanceof SimpleLiteral);
+            SimpleLiteral obj = (SimpleLiteral) tt.getObjectHolder();
             assertThat(obj.getLang(), equalTo("en"));
         } catch (Throwable t) {
             t.printStackTrace();

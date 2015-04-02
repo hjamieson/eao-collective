@@ -11,7 +11,6 @@
 
 package org.oclc.eao.collective.indexer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.Validate;
 import org.elasticsearch.action.get.GetResponse;
@@ -20,12 +19,10 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.model.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -97,7 +94,7 @@ public class IndexClient {
 
     public void index(Triple triple) {
         Validate.notEmpty(triple.getId(), "ID value missing; required");
-        Validate.notEmpty(triple.getLoadId(), "loadId value missing; required");
+        Validate.notEmpty(triple.getInstance(), "loadId value missing; required");
         Validate.notEmpty(triple.getCollection(), "collection value missing; required");
         try {
             String json = om.writeValueAsString(triple);

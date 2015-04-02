@@ -81,28 +81,31 @@ public class TripleHelper {
         return m.matches() ? m.group(2) : "";
     }
 
-    public static ObjectHolder getObject(String nTripleString) {
+    public static ObjectHolder getObjectHolder(String objectFragment) {
         //todo we only handle text literals here; this needs widening!!
-        ObjectHolder.Type ot = getObjectType(nTripleString);
-        String literal = getObjectFragment(nTripleString);
+        ObjectHolder.Type ot = getObjectType(objectFragment);
         if (ot == ObjectHolder.Type.LITERAL) {
-            return new SimpleLiteral(literal);
+            return new SimpleLiteral(objectFragment);
         } else if (ot == ObjectHolder.Type.LITERAL_WITH_LANG) {
-            Matcher m = FRAG_LITERAL_WITH_LANG.matcher(literal);
+            Matcher m = FRAG_LITERAL_WITH_LANG.matcher(objectFragment);
             m.matches();
             return new SimpleLiteral(m.group(1), m.group(2));
         }
-        throw new UnsupportedOperationException("unsupported object type: " + nTripleString);
+        throw new UnsupportedOperationException("unsupported object type: " + objectFragment);
     }
 
+    /**
+     * returrns the fragment of the n-triple string between the predicate and the '.'.
+     * @param nTripleString
+     * @return
+     */
     public static String getObjectFragment(String nTripleString) {
         Matcher m = NT_OBJECT_FRAGMENT.matcher(nTripleString);
         return m.matches() ? m.group(1).trim() : "";
     }
 
 
-    public static ObjectHolder.Type getObjectType(String nTripleString) {
-        String frag = getObjectFragment(nTripleString);
+    public static ObjectHolder.Type getObjectType(String frag) {
         if (FRAG_TYPED_LITERAL.matcher(frag).matches()) {
             return ObjectHolder.Type.TYPED_LITERAL;
         } else if (FRAG_LITERAL_WITH_LANG.matcher(frag).matches()) {
@@ -131,9 +134,9 @@ public class TripleHelper {
         Triple triple = new Triple();
         triple.setSubject(TripleHelper.getSubject(nTripleText));
         triple.setPredicate(TripleHelper.getPredicate(nTripleText));
-        triple.setObject(TripleHelper.getObject(nTripleText));
+        triple.setObject(TripleHelper.getObjectFragment(nTripleText));
         triple.setCollection(collection);
-        triple.setLoadId(loadId);
+        triple.setInstance(loadId);
         return triple;
     }
 

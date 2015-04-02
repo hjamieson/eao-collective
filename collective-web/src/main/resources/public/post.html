@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html ng-app="capp">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Collective Poster</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <style type="text/css">
+        div.tab {
+            width: 100px;
+            float: left;
+        }
+    </style>
+</head>
+<body ng-app="browse" class="container">
+<script type="text/javascript" src="js/angular.min.js"></script>
+<script type="text/javascript">
+    var app = angular.module('capp', []);
+    var model = {collection: 'hugh', instance: 'collective-web'};
+    var items = [];
+    app.controller('PostController', function ($scope, $http) {
+        $scope.todo = {collection: "hugh", instance: "web"}
+        $scope.items = items;
+        $scope.postNewItem = function () {
+            $http.post('triple', $scope.todo)
+                    .success(function (data, status, headers, config) {
+                        console.log("saved!");
+                        $scope.items.push($scope.todo);
+                        $scope.todo = {collection: 'hugh', instance: 'collective-web'};
+                    })
+                    .error(function (data, status, headers, config) {
+                        console.log("failed!" + status);
+                    });
+        };
+    });
+
+</script>
+<div class="container" ng-controller="PostController">
+    <div>
+        <h1>Collective Concept</h1>
+
+        <p class="lead">Use this page to send a new triple to the collective.</p>
+    </div>
+    <div>
+        <form id="form1">
+            <p>I can see {{model.collection}}</p>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>collection</label>
+                        <input type="text" ng-model="todo.collection" class="form-control" placeholder="thumbnails"/>
+                    </div>
+                    <div class="form-group">
+                        <label>instance</label>
+                        <input type="text" ng-model="todo.instance" class="form-control" placeholder="collective-web"/>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="form-group">
+                        <label>subject</label>
+                        <input type="text" ng-model="todo.subject" class="form-control"
+                               placeholder="http://someplace.org/123"/>
+                    </div>
+                    <div class="form-group">
+                        <label>predicate</label>
+                        <input type="text" ng-model="todo.predicate" class="form-control"
+                               placeholder="http://ontology.org/property"/>
+                    </div>
+                    <div class="form-group">
+                        <label>object</label>
+                        <input type="text" ng-model="todo.object" class="form-control"
+                               placeholder="&quot;Dark Side Of The Moon&quot;@en"/>
+                    </div>
+                    <div class="form-group">
+                        <label>n-triple</label>
+                        <input type="text" ng-model="ntriple" class="form-control"
+                               placeholder="<http...> <http...> &quot;abcs..&quot; ."/>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-default" ng-click="postNewItem();">submit</button>
+        </form>
+    </div>
+    <div>
+        <h4>Ready Items</h4>
+        <table class="table">
+            <tbody>
+            <tr ng-repeat="item in items">
+                <td>{{item.collection}}</td>
+                <td>{{item.instance}}</td>
+                <td>{{item.subject}}</td>
+                <td>{{item.predicate}}</td>
+                <td>{{item.object}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -13,7 +13,7 @@
 
 package org.oclc.eao.collective.api.model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.oclc.eao.collective.api.TripleHelper;
 
 /**
@@ -29,10 +29,10 @@ public class Triple {
     private String id;
     private String subject;
     private String predicate;
-    private ObjectHolder object;
+    private String object;  // in this model, literals include the quotes so that we can tell its a literal!
     private double weight;
     private String collection;
-    private String loadId;
+    private String instance;
 
     public Triple() {
         setWeight(DEFAULT_WEIGHT);
@@ -41,24 +41,18 @@ public class Triple {
     public Triple(String subj, String pred, String literal) {
         setSubject(subj);
         setPredicate(pred);
-        setObject(new SimpleLiteral(literal));
+        setObject(literal);
         setWeight(DEFAULT_WEIGHT);
     }
 
-    public Triple(String subj, String pred, String literal, String lang) {
-        setSubject(subj);
-        setPredicate(pred);
-        setObject(new SimpleLiteral(literal, lang));
-        setWeight(DEFAULT_WEIGHT);
-    }
 
-    public Triple(String subject, String predicate, ObjectHolder object, double weight, String collection, String loadId) {
+    public Triple(String subject, String predicate, String object, double weight, String collection, String instance) {
         this.subject = subject;
         this.predicate = predicate;
         this.object = object;
         this.weight = weight;
         this.collection = collection;
-        this.loadId = loadId;
+        this.instance = instance;
     }
 
     @Override
@@ -90,11 +84,11 @@ public class Triple {
         this.predicate = predicate;
     }
 
-    public ObjectHolder getObject() {
+    public String getObject() {
         return object;
     }
 
-    public void setObject(ObjectHolder object) {
+    public void setObject(String object) {
         this.object = object;
     }
 
@@ -114,11 +108,16 @@ public class Triple {
         this.collection = collection;
     }
 
-    public String getLoadId() {
-        return loadId;
+    public String getInstance() {
+        return instance;
     }
 
-    public void setLoadId(String loadId) {
-        this.loadId = loadId;
+    public void setInstance(String instance) {
+        this.instance = instance;
+    }
+
+    @JsonIgnore
+    public ObjectHolder getObjectHolder(){
+        return TripleHelper.getObjectHolder(this.object);
     }
 }
