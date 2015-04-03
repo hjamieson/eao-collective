@@ -49,9 +49,9 @@ public class HBaseStore implements NtStore {
     private String tableName = "eao_collective";
 
     public static final byte[] ID_CQ = "id".getBytes();
-    public static final byte[] SUBJ_CQ = "subj".getBytes();
-    public static final byte[] PRED_CQ = "pred".getBytes();
-    public static final byte[] OBJ_CQ = "obj".getBytes();
+    public static final byte[] SUBJ_CQ = "subject".getBytes();
+    public static final byte[] PRED_CQ = "predicate".getBytes();
+    public static final byte[] OBJ_CQ = "object".getBytes();
     public static final byte[] WEIGHT_CQ = "weight".getBytes();
     public static final byte[] COLLECTION_CQ = "collection".getBytes();
     public static final byte[] LOADID_CQ = "loadId".getBytes();

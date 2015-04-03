@@ -91,7 +91,7 @@ public class TripleController {
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
-    @RequestMapping(value="/ntriple", method = RequestMethod.POST)
+    @RequestMapping(value="/nt", method = RequestMethod.POST)
     ResponseEntity<Void> ntPost(@RequestBody NTripleText ntriple, ServletUriComponentsBuilder uriBuilder) throws IOException {
         LOG.trace("POST for {} received", ntriple.getText());
 

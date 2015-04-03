@@ -19,6 +19,7 @@ import org.apache.commons.lang.Validate;
 import org.oclc.eao.collective.api.model.ObjectHolder;
 import org.oclc.eao.collective.api.model.SimpleLiteral;
 import org.oclc.eao.collective.api.model.Triple;
+import org.oclc.eao.collective.api.model.TypedLiteral;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,7 +42,7 @@ public class TripleHelper {
 
     // object patterns for helper methods
     public static Pattern FRAG_LITERAL_WITH_LANG = Pattern.compile("^\"(.+)\"@(..)$");
-    public static Pattern FRAG_TYPED_LITERAL = Pattern.compile("^.+\\^{2}(.+)$");
+    public static Pattern FRAG_TYPED_LITERAL = Pattern.compile("^(.+)\\^{2}(.+)$");
     public static Pattern FRAG_SIMPLE_LITERAL = Pattern.compile("^\"(.+)\"");
 
     //todo need to handle blank node (_:alice, _:bob)
@@ -51,6 +52,11 @@ public class TripleHelper {
     private TripleHelper() {
     }
 
+    /**
+     * checks an n-triple expression for well-formed-ness.
+     * @param nTripleString
+     * @return
+     */
     public static boolean isWellFormed(String nTripleString) {
         boolean good = true;
 
@@ -90,6 +96,10 @@ public class TripleHelper {
             Matcher m = FRAG_LITERAL_WITH_LANG.matcher(objectFragment);
             m.matches();
             return new SimpleLiteral(m.group(1), m.group(2));
+        } else if (ot == ObjectHolder.Type.TYPED_LITERAL){
+            Matcher m = FRAG_TYPED_LITERAL.matcher(objectFragment);
+            m.matches();
+            return new TypedLiteral(m.group(1), m.group(2));
         }
         throw new UnsupportedOperationException("unsupported object type: " + objectFragment);
     }
@@ -129,14 +139,14 @@ public class TripleHelper {
         throw new IllegalArgumentException("no lang tag available");
     }
 
-    public static Triple makeTriple(String nTripleText, String collection, String loadId) {
+    public static Triple makeTriple(String nTripleText, String collection, String instance) {
         Validate.isTrue(isWellFormed(nTripleText));
         Triple triple = new Triple();
         triple.setSubject(TripleHelper.getSubject(nTripleText));
         triple.setPredicate(TripleHelper.getPredicate(nTripleText));
         triple.setObject(TripleHelper.getObjectFragment(nTripleText));
         triple.setCollection(collection);
-        triple.setInstance(loadId);
+        triple.setInstance(instance);
         return triple;
     }
 

@@ -20,77 +20,130 @@
     app.controller('PostController', function ($scope, $http) {
         $scope.todo = {collection: "hugh", instance: "web"}
         $scope.items = items;
+        $scope.nTriple = {collection: 'n-triple-testabc', instance: 'n-triple-web'};
         $scope.postNewItem = function () {
             $http.post('triple', $scope.todo)
                     .success(function (data, status, headers, config) {
                         console.log("saved!");
-                        $scope.items.push($scope.todo);
+                        $scope.items.push({
+                            status: status,
+                            location: headers('location'),
+                            collection: $scope.todo.collection,
+                            instance: $scope.todo.instance
+                        });
                         $scope.todo = {collection: 'hugh', instance: 'collective-web'};
                     })
                     .error(function (data, status, headers, config) {
                         console.log("failed!" + status);
                     });
         };
+
+        $scope.postNtriple = function () {
+            $http.post('triple/nt', $scope.nTriple)
+                    .success(function (data, status, headers, config) {
+                        $scope.items.push({
+                            status: status,
+                            location: headers('location'),
+                            collection: $scope.todo.collection,
+                            instance: $scope.todo.instance
+                        });
+                        $scope.nTriple.text = null;
+                    })
+                    .error(function (data, status, headers, config) {
+                        console.log("nTriple post failed");
+                    });
+        };
+
+        $scope.dummy = function () {
+            console.log("we would post: " + $scope.nTriple.text);
+            $scope.nTriple.text = null;
+        }
     });
 
 </script>
 <div class="container" ng-controller="PostController">
-    <div>
-        <h1>Collective Concept</h1>
+    <div class="row">
+        <div class="col-md-8">
+            <h1>Collective Concept</h1>
 
-        <p class="lead">Use this page to send a new triple to the collective.</p>
+            <p class="lead">Use this page to send a new triple to the collective.</p>
+        </div>
+        <div class="col-md-4"><img style="width:200px"
+                src="http://www.oclc.org/content/dam/oclc/common/images/logos/new/OCLC/OCLC_Logo_H_Color_NoTag.png"/>
+        </div>
     </div>
     <div>
         <form id="form1">
-            <p>I can see {{model.collection}}</p>
 
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-3 panel panel-default">
+                    <h4>Meta Parameters</h4>
+
                     <div class="form-group">
-                        <label>collection</label>
-                        <input type="text" ng-model="todo.collection" class="form-control" placeholder="thumbnails"/>
+                        <label>Collection</label>
+                        <input type="text" ng-model="todo.collection" class="form-control"
+                               placeholder="thumbnails"/>
                     </div>
                     <div class="form-group">
-                        <label>instance</label>
-                        <input type="text" ng-model="todo.instance" class="form-control" placeholder="collective-web"/>
+                        <label>Instance</label>
+                        <input type="text" ng-model="todo.instance" class="form-control"
+                               placeholder="collective-web"/>
                     </div>
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-8 col-md-offset-1 panel panel-default">
+                    <h4>(S,P,O) Form</h4>
+
                     <div class="form-group">
-                        <label>subject</label>
+                        <label>Subject</label>
                         <input type="text" ng-model="todo.subject" class="form-control"
                                placeholder="http://someplace.org/123"/>
                     </div>
                     <div class="form-group">
-                        <label>predicate</label>
+                        <label>Predicate</label>
                         <input type="text" ng-model="todo.predicate" class="form-control"
                                placeholder="http://ontology.org/property"/>
                     </div>
                     <div class="form-group">
-                        <label>object</label>
+                        <label>Object</label>
                         <input type="text" ng-model="todo.object" class="form-control"
                                placeholder="&quot;Dark Side Of The Moon&quot;@en"/>
                     </div>
                     <div class="form-group">
-                        <label>n-triple</label>
-                        <input type="text" ng-model="ntriple" class="form-control"
-                               placeholder="<http...> <http...> &quot;abcs..&quot; ."/>
+                        <button class="btn btn-info" ng-click="postNewItem();">submit</button>
                     </div>
                 </div>
             </div>
-            <button class="btn btn-default" ng-click="postNewItem();">submit</button>
+            <div class="row panel panel-default">
+                <h4>N-Triple Input Form</h4>
+
+                <div class="form-group">
+                    <label>Text</label>
+                    <input type="text" ng-model="nTriple.text" class="form-control"
+                           placeholder="<http...> <http...> &quot;abcs..&quot; ."/>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" ng-click="postNtriple();">submit</button>
+                </div>
+            </div>
         </form>
     </div>
     <div>
-        <h4>Ready Items</h4>
+        <h4>Post History</h4>
         <table class="table">
+            <thead>
+            <tr>
+                <td>status</td>
+                <td>collection</td>
+                <td>instance</td>
+                <td>location</td>
+            </tr>
+            </thead>
             <tbody>
             <tr ng-repeat="item in items">
+                <td>{{item.status}}</td>
                 <td>{{item.collection}}</td>
                 <td>{{item.instance}}</td>
-                <td>{{item.subject}}</td>
-                <td>{{item.predicate}}</td>
-                <td>{{item.object}}</td>
+                <td>{{item.location}}</td>
             </tr>
             </tbody>
         </table>

@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Description: Job that takes a file with n-triples (1-per-line) and loads them into the collective.  It also
@@ -50,12 +49,12 @@ import java.util.Map;
  * Time: 2:49 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class BulkTripleLoader extends Configured implements Tool {
-    private static final Logger LOG = LoggerFactory.getLogger(BulkTripleLoader.class);
+public class BulkNtLoader extends Configured implements Tool {
+    private static final Logger LOG = LoggerFactory.getLogger(BulkNtLoader.class);
     private static final String DEFAULT_TABLE = "eao_collective";
     public static final String JOB_TITLE = "Collective (HBase) Bulk Loader";
     public static final byte[] DEFAULT_CF = Bytes.toBytes("data");
-    public static final String LOADID_KEY = "loader.loadid";
+    public static final String INSTANCE_KEY = "loader.instance";
     public static final String COLLECTION_KEY = "loader.collection";
     public static final String TABLENAME_KEY = "loader.table.name";
 
@@ -68,7 +67,7 @@ public class BulkTripleLoader extends Configured implements Tool {
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
-            loadId = context.getConfiguration().get(LOADID_KEY);
+            loadId = context.getConfiguration().get(INSTANCE_KEY);
             Validate.notEmpty(loadId, "unspecified LOADID value");
             collection = context.getConfiguration().get(COLLECTION_KEY);
             Validate.notEmpty(collection, "unspecified COLLECTION value");
@@ -117,7 +116,7 @@ public class BulkTripleLoader extends Configured implements Tool {
 
     public static void main(String[] args) {
         try {
-            int run = ToolRunner.run(new BulkTripleLoader(), args);
+            int run = ToolRunner.run(new BulkNtLoader(), args);
             System.exit(run);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -136,7 +135,7 @@ public class BulkTripleLoader extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         if (args.length != 3) {
             System.err.println(
-                    "Usage: " + BulkTripleLoader.class.getSimpleName() + " <nt-file-path> <collection> <loadId>");
+                    "Usage: " + BulkNtLoader.class.getSimpleName() + " <nt-file-path> <collection> <instance>");
             System.exit(1);
         }
         // args[0] = path to file
@@ -146,7 +145,7 @@ public class BulkTripleLoader extends Configured implements Tool {
         this.setConf(HBaseConfiguration.create(getConf()));
         Configuration conf = getConf();
         conf.set(COLLECTION_KEY, args[1]);
-        conf.set(LOADID_KEY, args[2]);
+        conf.set(INSTANCE_KEY, args[2]);
         conf.set(TABLENAME_KEY, DEFAULT_TABLE);
         if (conf.getClassLoader() == null) {
             conf.setClassLoader(this.getClass().getClassLoader());

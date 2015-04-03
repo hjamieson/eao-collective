@@ -102,7 +102,7 @@ public class TripleHelperTest {
     public void testGetLiteralLang() {
         ObjectHolder holder = TripleHelper.getObjectHolder(TripleHelper.getObjectFragment(triple[3]));
         assertTrue(holder instanceof SimpleLiteral);
-        assertThat(((SimpleLiteral)holder).getLang(), equalTo("en"));
+        assertThat(((SimpleLiteral) holder).getLang(), equalTo("en"));
 
     }
 
@@ -133,6 +133,21 @@ public class TripleHelperTest {
             t.printStackTrace();
             fail(t.getMessage());
         }
+    }
+
+    @Test
+    public void testTypedLiteral(){
+        // a typed literal should look like this:
+        // <http://dbpedia.org/resource/Aristotle> <http://dbpedia.org/ontology/birthDate> "-0384"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+        String typedLiteral = "<http://dbpedia.org/resource/Aristotle> <http://dbpedia.org/ontology/birthDate> \"-0384\"^^<http://www.w3.org/2001/XMLSchema#gYear> .";
+        assertTrue(TripleHelper.isWellFormed(typedLiteral));
+        Triple triple = TripleHelper.makeTriple(typedLiteral, "junit", "junit");
+        assertThat(TripleHelper.getObjectFragment(typedLiteral), equalTo(triple.getObject()));
+        assertThat(TripleHelper.getObjectFragment(typedLiteral), equalTo("\"-0384\"^^<http://www.w3.org/2001/XMLSchema#gYear>"));
+        ObjectHolder holder = triple.getObjectHolder();
+        assertTrue(holder instanceof TypedLiteral);
+        assertThat(((TypedLiteral)holder).getXmlType(), equalTo("<http://www.w3.org/2001/XMLSchema#gYear>"));
+
     }
 
 }
