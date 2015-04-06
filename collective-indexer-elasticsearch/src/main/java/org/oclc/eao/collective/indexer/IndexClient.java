@@ -1,13 +1,15 @@
-/****************************************************************************************************************
- *
- *  Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in 
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
- *
- ******************************************************************************************************************/
+/**
+ * *************************************************************************************************************
+ * <p/>
+ * Copyright (c) 2014 OCLC, Inc. All Rights Reserved.
+ * <p/>
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc.  Duplication of any portion of these materials shall include this notice.
+ * <p/>
+ * ****************************************************************************************************************
+ */
 
 package org.oclc.eao.collective.indexer;
 
@@ -15,14 +17,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.Validate;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.oclc.eao.collective.api.model.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -107,5 +116,19 @@ public class IndexClient {
 
     public void delete(String id) {
         client.prepareDelete(INDEX, TYPE_NT, id).execute();
+    }
+
+    public List<String> search(String subject, String predicate, String object, int maxRows) {
+        // todo implement search via ES
+        QueryBuilder qb = QueryBuilders.matchQuery("object", object);
+        SearchResponse searchResponse = client.prepareSearch("collective")
+                .setTypes("triple").setQuery(qb).setSize(maxRows).execute().actionGet();
+        LOG.debug("search request returned {} hits", searchResponse.getHits().getTotalHits());
+
+        List<String> keyList = new LinkedList<>();
+        for (SearchHit hit : searchResponse.getHits()) {
+            keyList.add(hit.getId());
+        }
+        return keyList;
     }
 }

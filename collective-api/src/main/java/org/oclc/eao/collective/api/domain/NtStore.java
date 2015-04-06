@@ -3,6 +3,7 @@ package org.oclc.eao.collective.api.domain;
 import org.oclc.eao.collective.api.model.Triple;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -17,6 +18,8 @@ public interface NtStore {
     void save(Triple nt) throws IOException;
 
     Triple get(String id) throws IOException;
+
+    List<Triple> get(Collection<String> keyList) throws IOException;
 
     List<Triple> find(String query) throws IOException;
 

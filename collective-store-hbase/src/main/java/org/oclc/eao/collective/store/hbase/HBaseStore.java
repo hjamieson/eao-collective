@@ -13,7 +13,6 @@
 
 package org.oclc.eao.collective.store.hbase;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
@@ -26,12 +25,13 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.oclc.eao.collective.api.domain.NtStore;
-import org.oclc.eao.collective.api.model.ObjectHolder;
 import org.oclc.eao.collective.api.model.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -54,7 +54,7 @@ public class HBaseStore implements NtStore {
     public static final byte[] OBJ_CQ = "object".getBytes();
     public static final byte[] WEIGHT_CQ = "weight".getBytes();
     public static final byte[] COLLECTION_CQ = "collection".getBytes();
-    public static final byte[] LOADID_CQ = "loadId".getBytes();
+    public static final byte[] INSTANCE_CQ = "instance".getBytes();
 
 
     public HBaseStore(Configuration config) {
@@ -83,7 +83,6 @@ public class HBaseStore implements NtStore {
     }
 
     public static Put getPut(Triple nt) {
-        ObjectMapper om = new ObjectMapper();
 
         Put put = new Put(Bytes.toBytes(nt.getId()));
         put.add(DEFAULT_CF, ID_CQ, nt.getId().getBytes());
@@ -91,7 +90,7 @@ public class HBaseStore implements NtStore {
         put.add(DEFAULT_CF, PRED_CQ, nt.getPredicate().getBytes());
         put.add(DEFAULT_CF, OBJ_CQ, nt.getObject().getBytes());
         put.add(DEFAULT_CF, COLLECTION_CQ, nt.getCollection().toString().getBytes());
-        put.add(DEFAULT_CF, LOADID_CQ, nt.getInstance().getBytes());
+        put.add(DEFAULT_CF, INSTANCE_CQ, nt.getInstance().getBytes());
         put.add(DEFAULT_CF, WEIGHT_CQ, Bytes.toBytes(nt.getWeight()));
         return put;
     }
@@ -114,8 +113,32 @@ public class HBaseStore implements NtStore {
         }
     }
 
+    @Override
+    public List<Triple> get(Collection<String> keyList) throws IOException {
+        LOG.debug("get for keyList({})", keyList.size());
+        // todo implement multi-get from hbase using keys.
+        HTableInterface hTable = null;
+        List<Triple> triples = new ArrayList<>();
+        try {
+            hTable = hConnection.getTable(tableName);
+            for (String key : keyList) {
+                LOG.debug("get for key={}", key);
+                Result result = hTable.get(new Get(Bytes.toBytes(key)));
+                if (!result.isEmpty()) {
+                    triples.add(getTripleFromResult(result));
+                } else {
+                    LOG.debug("key {} is empty", key);
+                }
+            }
+            return triples;
+        } catch (Exception e) {
+            throw new IOException(e);
+        } finally {
+            hTable.close();
+        }
+    }
+
     public static Triple getTripleFromResult(Result result) {
-        ObjectMapper om = new ObjectMapper();
         Triple resp = new Triple();
         resp.setId(result.getRow().toString());
         // get all columns in data family
@@ -124,7 +147,7 @@ public class HBaseStore implements NtStore {
         resp.setObject(Bytes.toString(result.getValue(DEFAULT_CF, OBJ_CQ)));
         resp.setWeight(Bytes.toDouble(result.getValue(DEFAULT_CF, WEIGHT_CQ)));
         resp.setCollection(Bytes.toString(result.getValue(DEFAULT_CF, COLLECTION_CQ)));
-        resp.setInstance(Bytes.toString(result.getValue(DEFAULT_CF, LOADID_CQ)));
+        resp.setInstance(Bytes.toString(result.getValue(DEFAULT_CF, INSTANCE_CQ)));
         return resp;
     }
 

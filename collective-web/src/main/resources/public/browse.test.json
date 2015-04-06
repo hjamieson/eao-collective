@@ -1,0 +1,4 @@
+[
+{"collection":"sample", "subject":"http://example.org/person/123","predicate":"http://schema.org/title", "object":"\"Chairman of the Board\"@en", "weight": 0.5},
+{"collection":"example", "subject":"http://starwars.org/patient/123","predicate":"http://schema.org/name", "object":"\"Luke Skywalker\"@en", "weight": 0.5}
+]

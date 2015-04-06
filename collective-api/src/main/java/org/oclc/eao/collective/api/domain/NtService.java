@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -23,11 +24,11 @@ public class NtService {
     private NtStore ntStore;
 
     public Triple create(Triple nt) throws IOException {
-        Validate.isTrue(nt.getId()==null,TRIPLE_ALREADY_PERSISTED);
-        Validate.notEmpty(nt.getInstance(),"loadId missing");
-        Validate.notEmpty(nt.getSubject(),"subject missing");
-        Validate.notEmpty(nt.getSubject(),"subject missing");
-        Validate.notEmpty(nt.getPredicate(),"predicate missing");
+        Validate.isTrue(nt.getId() == null, TRIPLE_ALREADY_PERSISTED);
+        Validate.notEmpty(nt.getInstance(), "loadId missing");
+        Validate.notEmpty(nt.getSubject(), "subject missing");
+        Validate.notEmpty(nt.getSubject(), "subject missing");
+        Validate.notEmpty(nt.getPredicate(), "predicate missing");
         Validate.notNull(nt.getObject(), "object missing");
         Validate.notEmpty(nt.getCollection(), "no COLLECTION tag found");
         nt.setId(UUID.randomUUID().toString());
@@ -42,6 +43,10 @@ public class NtService {
 
     public void delete(String id) throws IOException {
         ntStore.delete(id);
+    }
+
+    public List<Triple> get(List<String> keyList) throws IOException {
+        return ntStore.get(keyList);
     }
 
     public NtService() {

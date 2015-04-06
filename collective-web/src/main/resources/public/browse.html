@@ -4,38 +4,110 @@
     <meta charset="UTF-8">
     <title>Collective Browser</title>
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
-    <style type="text/css">
-    div.tab {
-    	width:100px;
-    	float:left;
+    <script type="text/javascript" src="js/angular.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+    var app = angular.module('browse', []);
+
+
+    var model = {
+        query: {maxRows: 25}
     }
+
+    // app.run(function($http){
+    //     $http.get('browse.test.json')
+    //     .success(function(data){
+    //         model.results = data;
+    //     });
+    // });
+
+    app.controller('BrowseController', function($scope, $http){
+        $scope.model = model;
+
+        $scope.searchTextCmd = function(){
+            if ($scope.model.query.object==null){
+                console.log("object is null!");
+            } else {
+            $http.post('search', $scope.model.query)
+                .success(function(data, status, headers, config){
+                    console.log("request to server successful");
+                    $scope.model.results = data;
+                })
+                .error(function(data, status, headers, config){
+                    console.log("call to server failed, status="+ status);
+                });
+            }
+        };
+
+    });
+    </script>
+
+    <style type="text/css">
     </style>
 </head>
-<body ng-app="browse" class="container">
-<script type="text/javascript" src="js/angular.min.js"></script>
-<script type="text/javascript" src="js/bootstrap.min.js"></script>
-<script type="text/javascript" src="js/browse.js"></script>
+<body ng-app="browse">
 
-<div>
-	<p class="alert alert-info">You have reached the collective {{ "mash"+"up" }}...</p>
-</div>
-<div ng-controller="TabController as tc">
-	<div class="tab">
-		<p><a href="" ng-click="tc.setCurrent(1)">by Subject</a></p>
-	</div>
-	<div class="tab">
-		<p><a href="" ng-click="tc.setCurrent(2)">by Predicate</a></p>
-	</div>
-	<div class="tab">
-		<p><a href="" ng-click="tc.setCurrent(3)">by Literal</a></p>
-	</div>
-	<div style="clear:left">{{ tc.current }}</div>
-		<input type="text" placeholder="literal search" size="30"/>
-</div>
+    <div class="container-fluid" ng-controller="BrowseController as bc">
+        <div class="row">
+            <div class="col-md-8">
+                <h1>Collective Browser</h1>
+                <p>Use this page to search for items that have matching text.</p>
+            </div>
+            <div class="col-md-4"><img style="width:200px"
+                src="http://www.oclc.org/content/dam/oclc/common/images/logos/new/OCLC/OCLC_Logo_H_Color_NoTag.png"/>
+            </div>
+        </div>
 
-<div class="results">
-	
-</div>
+        <div class="panel well">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label>Subject:</label>
+                    <input type="text" class="form-control" size="30" ng-model="model.query.subject" placeholder="subject text"/>
+                </div>
+                <div class="form-group">
+                    <label>Predicate:</label>
+                    <input type="text" class="form-control" size="30" ng-model="model.query.predicate" placeholder="predicate text"/>
+                </div>
+                <div class="form-group">
+                    <label>Object:</label>
+                    <input type="text" class="form-control" size="30" ng-model="model.query.object" placeholder="object text"/>
+                </div>
+                <div class="form-group">
+                    <label>Max results:</label>
+                    <input type="text" class="form-control" size="5" ng-model="model.query.maxRows"/>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" ng-click="searchTextCmd();">search</button>
+                </div>
+            </form>
+        </div>
+
+        <hr/>
+
+        <div class="panel">
+            <table class="table table-striped table-condensed">
+                <thead>
+                    <tr>
+                        <td>Collection</td>
+                        <td>Subject</td>
+                        <td>Predicate</td>
+                        <td>Object</td>
+                        <td>Weight</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="item in model.results">
+                        <td>{{item.collection}}</td>
+                        <td>{{item.subject}}</td>
+                        <td>{{item.predicate}}</td>
+                        <td>{{item.object}}</td>
+                        <td>{{item.weight}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
 
 </body>
 </html>
