@@ -115,14 +115,13 @@ public class HBaseStore implements NtStore {
 
     @Override
     public List<Triple> get(Collection<String> keyList) throws IOException {
-        LOG.debug("get for keyList({})", keyList.size());
+        LOG.debug("get for ({}) items", keyList.size());
         // todo implement multi-get from hbase using keys.
         HTableInterface hTable = null;
         List<Triple> triples = new ArrayList<>();
         try {
             hTable = hConnection.getTable(tableName);
             for (String key : keyList) {
-                LOG.debug("get for key={}", key);
                 Result result = hTable.get(new Get(Bytes.toBytes(key)));
                 if (!result.isEmpty()) {
                     triples.add(getTripleFromResult(result));

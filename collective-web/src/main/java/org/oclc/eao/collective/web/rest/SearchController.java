@@ -17,6 +17,7 @@ import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.domain.NtService;
 import org.oclc.eao.collective.api.model.Triple;
 import org.oclc.eao.collective.indexer.IndexClient;
+import org.oclc.eao.collective.indexer.ScrollFind;
 import org.oclc.eao.collective.web.model.NTripleText;
 import org.oclc.eao.collective.web.model.SearchParams;
 import org.slf4j.Logger;
@@ -59,10 +60,14 @@ public class SearchController {
     public List<Triple> search(@RequestBody SearchParams params) throws IOException {
         LOG.debug("search request received, object={}, maxRows={}", params.getObject(), params.getMaxRows());
 
-        List<String> keys = indexClient.search(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
-
-        List<Triple> triples = ntService.get(keys);
-
-        return triples;
+//        List<String> keys = indexClient.search1(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
+//        List<Triple> triples = ntService.get(keys);
+//        return triples;
+        ScrollFind scrollFind = indexClient.beginScrollSearch(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
+        if (scrollFind.hitsCount() > 0) {
+            return ntService.get(scrollFind.getHits());
+        } else {
+            return Collections.<Triple>emptyList();
+        }
     }
 }

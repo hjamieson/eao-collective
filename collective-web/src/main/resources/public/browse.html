@@ -25,6 +25,8 @@
         $scope.model = model;
 
         $scope.searchTextCmd = function(){
+            $scope.model.results = [];
+            
             if ($scope.model.query.object==null){
                 console.log("object is null!");
             } else {
