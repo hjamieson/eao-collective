@@ -25,6 +25,7 @@ public class SearchParams {
     private String predicate;
     private String object;
     private int maxRows;
+    private String scrollId;
 
     public SearchParams() {
     }
@@ -66,5 +67,13 @@ public class SearchParams {
 
     public void setMaxRows(int maxRows) {
         this.maxRows = maxRows;
+    }
+
+    public String getScrollId() {
+        return scrollId;
+    }
+
+    public void setScrollId(String scrollId) {
+        this.scrollId = scrollId;
     }
 }

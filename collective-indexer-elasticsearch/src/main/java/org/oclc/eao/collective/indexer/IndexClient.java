@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -170,7 +169,7 @@ public class IndexClient {
         return keyList;
     }
 
-    public ScrollFind beginScrollSearch(String subject, String predicate, String object, int maxRows) {
+    public IndexSearchResponse scrollSearchBegin(String subject, String predicate, String object, int maxRows) {
         BoolQueryBuilder qb = QueryBuilders.boolQuery();
         if (subject != null && subject.trim().length() != 0) {
             qb.must(termQuery("subject", subject));
@@ -194,20 +193,30 @@ public class IndexClient {
         LOG.debug("beginScroll response: hits({}), scrollId({})", scrollResponse.getHits().getTotalHits(), scrollResponse.getScrollId());
 
         // if we got an id, assume there are results to view:
-        ScrollFind scrollFind = new ScrollFind();
+        IndexSearchResponse indexSearchResponse = new IndexSearchResponse();
         if (scrollResponse.getScrollId() != null) {
-
-            scrollResponse = client.prepareSearchScroll(scrollResponse.getScrollId()).setScroll(new TimeValue(600000)).execute().actionGet();
-
-            List<String> keyList = new ArrayList<>();
-            for (SearchHit hit: scrollResponse.getHits().getHits()){
-                keyList.add(hit.getId());
-            }
-            scrollFind.set_scroll_id(scrollResponse.getScrollId());
-            scrollFind.setHits(keyList);
-            scrollFind.setHoldTime(30000);
+            indexSearchResponse = scrollSearchNext(scrollResponse.getScrollId(), 30000);
         }
-        LOG.debug("beginScrollSearch complete");
-        return scrollFind;
+        LOG.debug("scrollSearchBegin complete, {} keys returned", indexSearchResponse.hitsCount());
+        return indexSearchResponse;
+    }
+
+    /**
+     * returns the next buffer of search results from a scan-scroll.
+     * @param scrollId
+     * @param holdTime
+     * @return
+     */
+    public IndexSearchResponse scrollSearchNext(String scrollId, int holdTime) {
+        SearchResponse scrollResponse = client.prepareSearchScroll(scrollId)
+                .setScroll(new TimeValue(holdTime))
+                .execute()
+                .actionGet();
+
+        List<String> keyList = new ArrayList<>();
+        for (SearchHit hit : scrollResponse.getHits().getHits()) {
+            keyList.add(hit.getId());
+        }
+        return new IndexSearchResponse(holdTime, keyList, scrollResponse.getScrollId());
     }
 }

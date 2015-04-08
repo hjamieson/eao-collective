@@ -24,18 +24,10 @@ import java.util.List;
  * Time: 3:51 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class ScrollFind {
-    private String _scroll_id;
+public class IndexSearchResponse {
     private int holdTime;
     private List<String> hits;
-
-    public String get_scroll_id() {
-        return _scroll_id;
-    }
-
-    public void set_scroll_id(String _scroll_id) {
-        this._scroll_id = _scroll_id;
-    }
+    private String scrollId;
 
     public int getHoldTime() {
         return holdTime;
@@ -53,18 +45,21 @@ public class ScrollFind {
         this.hits = hits;
     }
 
-    public ScrollFind(String _scroll_id, int holdTime, List<String> hits) {
-        this._scroll_id = _scroll_id;
+    public String getScrollId() {
+        return scrollId;
+    }
+
+    public void setScrollId(String scrollId) {
+        this.scrollId = scrollId;
+    }
+
+    public IndexSearchResponse() {
+    }
+
+    public IndexSearchResponse(int holdTime, List<String> hits, String scrollId) {
         this.holdTime = holdTime;
         this.hits = hits;
-    }
-
-    public ScrollFind(String _scroll_id, int holdTime) {
-        this._scroll_id = _scroll_id;
-        this.holdTime = holdTime;
-    }
-
-    public ScrollFind() {
+        this.scrollId = scrollId;
     }
 
     public int hitsCount() {

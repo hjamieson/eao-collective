@@ -13,27 +13,19 @@
 
 package org.oclc.eao.collective.web.rest;
 
-import org.oclc.eao.collective.api.TripleHelper;
 import org.oclc.eao.collective.api.domain.NtService;
 import org.oclc.eao.collective.api.model.Triple;
 import org.oclc.eao.collective.indexer.IndexClient;
-import org.oclc.eao.collective.indexer.ScrollFind;
-import org.oclc.eao.collective.web.model.NTripleText;
+import org.oclc.eao.collective.indexer.IndexSearchResponse;
 import org.oclc.eao.collective.web.model.SearchParams;
+import org.oclc.eao.collective.web.model.SearchResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import org.springframework.web.util.UriComponents;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,6 +42,7 @@ import java.util.List;
 @RequestMapping("/search")
 public class SearchController {
     private static final Logger LOG = LoggerFactory.getLogger(SearchController.class);
+    public static final int DEFAULT_SCAN_HOLD_TIME_MS = 30000;
 
     @Autowired
     private NtService ntService;
@@ -63,11 +56,30 @@ public class SearchController {
 //        List<String> keys = indexClient.search1(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
 //        List<Triple> triples = ntService.get(keys);
 //        return triples;
-        ScrollFind scrollFind = indexClient.beginScrollSearch(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
-        if (scrollFind.hitsCount() > 0) {
-            return ntService.get(scrollFind.getHits());
+        IndexSearchResponse indexSearchResponse = indexClient.scrollSearchBegin(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
+        if (indexSearchResponse.hitsCount() > 0) {
+            return ntService.get(indexSearchResponse.getHits());
         } else {
             return Collections.<Triple>emptyList();
         }
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "scroll")
+    public SearchResults scrollSearch(@RequestBody SearchParams params) throws IOException {
+        LOG.debug("scrollSearch request, scrollId({})", params.getScrollId());
+        IndexSearchResponse indexSearchResponse = null;
+        SearchResults searchResults = new SearchResults();
+        if (params.getScrollId() == null) {
+            indexSearchResponse = indexClient.scrollSearchBegin(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
+        } else {
+            indexSearchResponse = indexClient.scrollSearchNext(params.getScrollId(), DEFAULT_SCAN_HOLD_TIME_MS);
+        }
+        if (indexSearchResponse.hitsCount() > 0) {
+            List<Triple> triples = ntService.get(indexSearchResponse.getHits());
+            searchResults.setTriples(triples);
+        }
+        // if no hits came back, blank out the scrollId!
+        searchResults.setScrollId(searchResults.getTriples().size() > 0 ? indexSearchResponse.getScrollId() : null);
+        return searchResults;
     }
 }
