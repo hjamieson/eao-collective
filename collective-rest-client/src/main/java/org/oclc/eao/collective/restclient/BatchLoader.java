@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -40,7 +39,7 @@ public class BatchLoader {
     public static void main(String[] args) {
         if (args.length != 3) {
             System.err.println(args);
-            System.err.println("Usage: BatchLoader <web-address> <loadId> <collection>");
+            System.err.println("Usage: BatchLoader <web-address> <instance> <collection>");
             System.exit(1);
         }
         ExecutorService es =
@@ -75,18 +74,18 @@ public class BatchLoader {
 
     public static class Task implements Runnable {
         private String text;
-        private String loadId;
+        private String instance;
         private String collection;
 
-        public Task(String text, String loadId, String collection) {
+        public Task(String text, String instance, String collection) {
             this.text = text;
-            this.loadId = loadId;
+            this.instance = instance;
             this.collection = collection;
         }
 
         @Override
         public void run() {
-            Triple t = TripleHelper.makeTriple(text, collection, loadId);
+            Triple t = TripleHelper.makeTriple(text, collection, instance);
             restClient.post(t);
         }
     }

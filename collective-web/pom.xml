@@ -27,7 +27,7 @@
                 </executions>
                 <configuration>
                     <folders>
-                        <folder>/Users/jamiesoh/opt/higgins/perf_conf</folder>
+                        <folder>${HADOOP_CONF_DIR}</folder>
                     </folders>
                 </configuration>
             </plugin>

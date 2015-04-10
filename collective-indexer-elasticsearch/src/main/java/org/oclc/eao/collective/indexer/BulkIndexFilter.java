@@ -39,11 +39,11 @@ public class BulkIndexFilter {
         args: none yet
          */
         if (args.length != 2) {
-            System.err.println("Usage: " + BulkIndexFilter.class.getSimpleName() + " <collection> <loadId>");
+            System.err.println("Usage: " + BulkIndexFilter.class.getSimpleName() + " <collection> <instance>");
             System.exit(1);
         }
         String collection = args[0];
-        String loadId = args[1];
+        String instance = args[1];
 
         BufferedReader reader = null;
         reader = new BufferedReader(new InputStreamReader(System.in));
@@ -51,7 +51,7 @@ public class BulkIndexFilter {
         try {
             while ((data = reader.readLine()) != null) {
                 // todo since the ID is assigned by the store, we really can't do this here!
-                Triple triple = TripleHelper.makeTriple(data, collection, loadId);
+                Triple triple = TripleHelper.makeTriple(data, collection, instance);
                 System.out.print(ElasticCommandBuilder.asBulkIndex(triple));
             }
         } finally {

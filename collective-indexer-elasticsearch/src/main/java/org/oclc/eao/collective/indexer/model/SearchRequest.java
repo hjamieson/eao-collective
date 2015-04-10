@@ -11,30 +11,38 @@
  * ****************************************************************************************************************
  */
 
-package org.oclc.eao.collective.web.model;
+package org.oclc.eao.collective.indexer.model;
 
 /**
  * Description:
  * User: jamiesoh
- * Date: 4/6/15
- * Time: 11:47 AM
+ * Date: 4/10/15
+ * Time: 5:23 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class SearchParams {
+public class SearchRequest {
+    private String collection;
+    private String instance;
     private String subject;
     private String predicate;
     private String object;
     private int maxRows;
     private String scrollId;
 
-    public SearchParams() {
+    public String getCollection() {
+        return collection;
     }
 
-    public SearchParams(String subject, String predicate, String object, int maxRows) {
-        this.subject = subject;
-        this.predicate = predicate;
-        this.object = object;
-        this.maxRows = maxRows;
+    public void setCollection(String collection) {
+        this.collection = collection;
+    }
+
+    public String getInstance() {
+        return instance;
+    }
+
+    public void setInstance(String instance) {
+        this.instance = instance;
     }
 
     public String getSubject() {
@@ -75,5 +83,18 @@ public class SearchParams {
 
     public void setScrollId(String scrollId) {
         this.scrollId = scrollId;
+    }
+
+    public SearchRequest(String collection, String instance, String subject, String predicate, String object, int maxRows, String scrollId) {
+        this.collection = collection;
+        this.instance = instance;
+        this.subject = subject;
+        this.predicate = predicate;
+        this.object = object;
+        this.maxRows = maxRows;
+        this.scrollId = scrollId;
+    }
+
+    public SearchRequest() {
     }
 }

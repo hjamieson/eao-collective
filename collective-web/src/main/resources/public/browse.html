@@ -32,13 +32,13 @@
             if ($scope.model.query.object==null){
                 console.log("object is null!");
             } else {
-                $http.post('search/scroll', $scope.model.query)
+                $http.post('search', $scope.model.query)
                     .success(function(data, status, headers, config){
                         $scope.model.results = data;
-                        console.log("request to server successful, scrollId="+$scope.model.results.scrollId);
+                        console.log("request to server successful, scrollId="+ $scope.model.results.scrollId);
                     })
                     .error(function(data, status, headers, config){
-                      console.log("call to server failed, status="+ status);
+                      console.log("call to server failed, status=" + status);
                     });
             }
         };

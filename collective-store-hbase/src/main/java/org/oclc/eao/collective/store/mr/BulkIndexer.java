@@ -23,7 +23,6 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -37,8 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.NavigableMap;
 
 /**
  * Description: Given a origin & collection, generate the elasticsearch BULK index statements that can
@@ -53,7 +50,7 @@ public class BulkIndexer extends Configured implements Tool {
     private static final Logger LOG = LoggerFactory.getLogger(BulkIndexer.class);
     public static final byte[] CF_DATA = "data".getBytes();
     public static final String JOB_NAME = "Bulk Index Dump";
-    public static final byte[] CQ_LOADID = "loadId".getBytes();
+    public static final byte[] CQ_INSTANCE = "instance".getBytes();
     public static final byte[] CQ_COLLECTION = "collection".getBytes();
 
     public static void main(String[] args) throws Exception {
@@ -63,12 +60,12 @@ public class BulkIndexer extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         if (args.length != 3) {
-            LOG.error("Usage:" + BulkIndexer.class.getSimpleName() + " <loadId> <collection> <output-path>");
+            LOG.error("Usage:" + BulkIndexer.class.getSimpleName() + " <instance> <collection> <output-path>");
             return 1;
         }
         /*
         args:
-        0 = loadId
+        0 = instance
         1 = collection
         2 = output path
          */
@@ -97,7 +94,7 @@ public class BulkIndexer extends Configured implements Tool {
     }
 
     private Filter makeFilters(String[] args) {
-        SingleColumnValueFilter c1 = new SingleColumnValueFilter(CF_DATA, CQ_LOADID, CompareFilter.CompareOp.EQUAL, args[0].getBytes());
+        SingleColumnValueFilter c1 = new SingleColumnValueFilter(CF_DATA, CQ_INSTANCE, CompareFilter.CompareOp.EQUAL, args[0].getBytes());
         SingleColumnValueFilter c2 = new SingleColumnValueFilter(CF_DATA, CQ_COLLECTION, CompareFilter.CompareOp.EQUAL, args[1].getBytes());
         return new FilterList(FilterList.Operator.MUST_PASS_ALL, c1, c2);
     }

@@ -60,15 +60,15 @@ public class BulkNtLoader extends Configured implements Tool {
 
     public static class BulkLoadMapper extends Mapper<LongWritable, Text, Text, NullWritable> {
         private Text ROWKEY = new Text();
-        private String loadId;
+        private String instance;
         private String collection;
         private HTable collective;
         private MultipleOutputs mos;
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
-            loadId = context.getConfiguration().get(INSTANCE_KEY);
-            Validate.notEmpty(loadId, "unspecified LOADID value");
+            instance = context.getConfiguration().get(INSTANCE_KEY);
+            Validate.notEmpty(instance, "unspecified LOADID value");
             collection = context.getConfiguration().get(COLLECTION_KEY);
             Validate.notEmpty(collection, "unspecified COLLECTION value");
             String tableName = context.getConfiguration().get(TABLENAME_KEY);
@@ -94,7 +94,7 @@ public class BulkNtLoader extends Configured implements Tool {
             // an id & weight, and the origin is passed in form the args as a conf variable.
             String text = line.toString();
             if (TripleHelper.isWellFormed(text)) {
-                Triple triple = TripleHelper.makeTriple(text, collection, loadId);
+                Triple triple = TripleHelper.makeTriple(text, collection, instance);
                 triple.setId(IdFactory.getNext());
                 Put put = HBaseStore.getPut(triple);
                 collective.put(put);
@@ -125,7 +125,8 @@ public class BulkNtLoader extends Configured implements Tool {
     }
 
     /**
-     * we expect three arguments: (0)= name of file, (1) = origin value, and (2) = collection value.
+     * we expect three arguments: (0)= name of file, (1) = collection value, (2) = output file .  We use the input-file
+     * as the instance name.
      *
      * @param args
      * @return
@@ -135,17 +136,17 @@ public class BulkNtLoader extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         if (args.length != 3) {
             System.err.println(
-                    "Usage: " + BulkNtLoader.class.getSimpleName() + " <nt-file-path> <collection> <instance>");
+                    "Usage: " + BulkNtLoader.class.getSimpleName() + " <nt-file-path> <collection> <output-path>");
             System.exit(1);
         }
         // args[0] = path to file
         // args[1] = collection value
-        // args[2] = loadId value
+        // args[2] = output-path value
 
         this.setConf(HBaseConfiguration.create(getConf()));
         Configuration conf = getConf();
         conf.set(COLLECTION_KEY, args[1]);
-        conf.set(INSTANCE_KEY, args[2]);
+        conf.set(INSTANCE_KEY, args[0]);
         conf.set(TABLENAME_KEY, DEFAULT_TABLE);
         if (conf.getClassLoader() == null) {
             conf.setClassLoader(this.getClass().getClassLoader());
@@ -158,7 +159,7 @@ public class BulkNtLoader extends Configured implements Tool {
         job.setNumReduceTasks(0);
         TextInputFormat.setInputPaths(job, new Path(args[0]));
         LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job, new Path(args[0] + "-out"));
+        TextOutputFormat.setOutputPath(job, new Path(args[3]));
 
         return job.waitForCompletion(true) ? 0 : 1;
     }

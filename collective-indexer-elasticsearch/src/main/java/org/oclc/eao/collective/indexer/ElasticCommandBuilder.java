@@ -36,7 +36,7 @@ public class ElasticCommandBuilder {
 
        /*
         {"index":{}}
-        {"subj":"..","loadId":"...","collection":"...",...}
+        {"subj":"..","instance":"...","collection":"...",...}
          */
         sb.append("{\"index\":{\"_id\":\"").append(triple.getId()).append("\"}}").append('\n');
         try {

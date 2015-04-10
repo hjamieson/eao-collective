@@ -29,6 +29,8 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.oclc.eao.collective.api.model.Triple;
+import org.oclc.eao.collective.indexer.model.IndexSearchResponse;
+import org.oclc.eao.collective.indexer.model.SearchRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +54,7 @@ public class IndexClient {
     public static final String CLIENT_NOT_CONNECTED = "client not connected";
     public static final String INDEX = "collective";
     public static final String TYPE_NT = "triple";
+    public static final int SEARCH_TTL_MS = 30000;
     private String[] hostList;
     private TransportClient client;
     private final ObjectMapper om;
@@ -62,12 +65,11 @@ public class IndexClient {
     }
 
     public IndexClient connect() {
-        if (client != null) {
-            throw new IllegalStateException("client already connected");
-        }
+        Validate.isTrue(client == null, "client already connected");
         Settings settings = ImmutableSettings.settingsBuilder()
                 .put("client.transport.ignore_cluster_name", true)
                 .put("client.transport.sniff", true)
+                .put("client.transport.ping_timeout", "10s")
                 .build();
         client = new TransportClient(settings);
         for (String hostName : hostList) {
@@ -85,30 +87,25 @@ public class IndexClient {
     }
 
     public void index(String idx, String type, String key, Map<String, Object> obj) {
-        if (client != null) {
-            client.prepareIndex(idx, type, key)
-                    .setSource(obj)
-                    .execute()
-                    .actionGet();
-        } else {
-            throw new IllegalStateException(CLIENT_NOT_CONNECTED);
-        }
+        Validate.notNull(client, CLIENT_NOT_CONNECTED);
+        client.prepareIndex(idx, type, key)
+                .setSource(obj)
+                .execute()
+                .actionGet();
     }
 
     public Map<String, Object> get(String idx, String type, String key) {
-        if (client != null) {
-            GetResponse resp = client.prepareGet(idx, type, key)
-                    .execute()
-                    .actionGet();
-            return resp.getSourceAsMap();
-        } else {
-            throw new IllegalStateException(CLIENT_NOT_CONNECTED);
-        }
+        Validate.notNull(client, CLIENT_NOT_CONNECTED);
+        GetResponse resp = client.prepareGet(idx, type, key)
+                .execute()
+                .actionGet();
+        return resp.getSourceAsMap();
     }
 
     public void index(Triple triple) {
+        Validate.notNull(client, CLIENT_NOT_CONNECTED);
         Validate.notEmpty(triple.getId(), "ID value missing; required");
-        Validate.notEmpty(triple.getInstance(), "loadId value missing; required");
+        Validate.notEmpty(triple.getInstance(), "instance value missing; required");
         Validate.notEmpty(triple.getCollection(), "collection value missing; required");
         try {
             String json = om.writeValueAsString(triple);
@@ -134,6 +131,7 @@ public class IndexClient {
      */
     @Deprecated
     public List<String> search(String subject, String predicate, String object, int maxRows) {
+        Validate.notNull(client, CLIENT_NOT_CONNECTED);
         // todo implement search via ES
         QueryBuilder qb = QueryBuilders.matchQuery("object", object);
         SearchResponse searchResponse = client.prepareSearch("collective")
@@ -147,46 +145,77 @@ public class IndexClient {
         return keyList;
     }
 
-    public List<String> search1(String subject, String predicate, String object, int maxRows) {
+    /**
+     * search method that is not pageable; you get the whole enchilada.
+     * @param req
+     * @return
+     */
+    public IndexSearchResponse searchAll(SearchRequest req) {
+        Validate.notNull(client, CLIENT_NOT_CONNECTED);
         BoolQueryBuilder qb = QueryBuilders.boolQuery();
-        if (subject != null && subject.trim().length() != 0) {
-            qb.must(termQuery("subject", subject));
+
+        if (req.getSubject() != null && req.getScrollId().trim().length() != 0) {
+            qb.must(termQuery("subject", req.getSubject()));
         }
-        if (predicate != null && predicate.trim().length() != 0) {
-            qb.must(termQuery("predicate", predicate));
+        if (req.getPredicate() != null && req.getPredicate().trim().length() != 0) {
+            qb.must(termQuery("predicate", req.getPredicate()));
         }
-        if (object != null && object.trim().length() != 0) {
-            qb.must(termQuery("object", object));
+        if (req.getObject() != null && req.getObject().trim().length() != 0) {
+            qb.must(termQuery("object", req.getObject()));
         }
+        if (req.getCollection() != null) {
+            qb.must(termQuery("collection", req.getCollection()));
+        }
+        if (req.getInstance() != null) {
+            qb.must(termQuery("instance", req.getInstance()));
+        }
+
         SearchResponse searchResponse = client.prepareSearch("collective")
-                .setTypes("triple").setQuery(qb).setSize(maxRows).execute().actionGet();
+                .setTypes("triple")
+                .setQuery(qb)
+                .setSize(1000)
+                .execute()
+                .actionGet();
         LOG.debug("search request returned {} hits", searchResponse.getHits().getTotalHits());
 
         List<String> keyList = new LinkedList<>();
         for (SearchHit hit : searchResponse.getHits()) {
             keyList.add(hit.getId());
         }
-        return keyList;
+        return new IndexSearchResponse(SEARCH_TTL_MS, keyList, null);
     }
 
-    public IndexSearchResponse scrollSearchBegin(String subject, String predicate, String object, int maxRows) {
+    /**
+     * Initiates a pageable search request.
+     *
+     * @param req
+     * @return
+     */
+    public IndexSearchResponse scrollSearchBegin(SearchRequest req) {
+        Validate.notNull(client, CLIENT_NOT_CONNECTED);
         BoolQueryBuilder qb = QueryBuilders.boolQuery();
-        if (subject != null && subject.trim().length() != 0) {
-            qb.must(termQuery("subject", subject));
+        if (req.getSubject() != null && req.getScrollId().trim().length() != 0) {
+            qb.must(termQuery("subject", req.getSubject()));
         }
-        if (predicate != null && predicate.trim().length() != 0) {
-            qb.must(termQuery("predicate", predicate));
+        if (req.getPredicate() != null && req.getPredicate().trim().length() != 0) {
+            qb.must(termQuery("predicate", req.getPredicate()));
         }
-        if (object != null && object.trim().length() != 0) {
-            qb.must(termQuery("object", object));
+        if (req.getObject() != null && req.getObject().trim().length() != 0) {
+            qb.must(termQuery("object", req.getObject()));
+        }
+        if (req.getCollection() != null) {
+            qb.must(termQuery("collection", req.getCollection()));
+        }
+        if (req.getInstance() != null) {
+            qb.must(termQuery("instance", req.getInstance()));
         }
         // start the scan; we should get a hash back to control the scroll!
         SearchResponse scrollResponse = client.prepareSearch("collective")
                 .setTypes("triple")
                 .setSearchType(SearchType.SCAN)
-                .setScroll(new TimeValue(30000))
+                .setScroll(new TimeValue(SEARCH_TTL_MS))
                 .setQuery(qb)
-                .setSize(maxRows)
+                .setSize(req.getMaxRows())
                 .execute()
                 .actionGet();
 
@@ -195,7 +224,7 @@ public class IndexClient {
         // if we got an id, assume there are results to view:
         IndexSearchResponse indexSearchResponse = new IndexSearchResponse();
         if (scrollResponse.getScrollId() != null) {
-            indexSearchResponse = scrollSearchNext(scrollResponse.getScrollId(), 30000);
+            indexSearchResponse = scrollSearchNext(scrollResponse.getScrollId(), SEARCH_TTL_MS);
         }
         LOG.debug("scrollSearchBegin complete, {} keys returned", indexSearchResponse.hitsCount());
         return indexSearchResponse;
@@ -203,11 +232,13 @@ public class IndexClient {
 
     /**
      * returns the next buffer of search results from a scan-scroll.
+     *
      * @param scrollId
      * @param holdTime
      * @return
      */
     public IndexSearchResponse scrollSearchNext(String scrollId, int holdTime) {
+        Validate.notNull(client, CLIENT_NOT_CONNECTED);
         SearchResponse scrollResponse = client.prepareSearchScroll(scrollId)
                 .setScroll(new TimeValue(holdTime))
                 .execute()

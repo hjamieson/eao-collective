@@ -55,6 +55,7 @@ public class InMemoryNtStore implements NtStore {
     }
 
     @Override
+    @SuppressWarnings("")
     public List<Triple> get(Collection<String> keyList) throws IOException {
         // todo implement something interesting
         return Collections.unmodifiableList(new ArrayList(map.values()));

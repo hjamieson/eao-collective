@@ -16,8 +16,8 @@ package org.oclc.eao.collective.web.rest;
 import org.oclc.eao.collective.api.domain.NtService;
 import org.oclc.eao.collective.api.model.Triple;
 import org.oclc.eao.collective.indexer.IndexClient;
-import org.oclc.eao.collective.indexer.IndexSearchResponse;
-import org.oclc.eao.collective.web.model.SearchParams;
+import org.oclc.eao.collective.indexer.model.IndexSearchResponse;
+import org.oclc.eao.collective.indexer.model.SearchRequest;
 import org.oclc.eao.collective.web.model.SearchResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,27 +50,26 @@ public class SearchController {
     private IndexClient indexClient;
 
     @RequestMapping(method = RequestMethod.POST)
-    public List<Triple> search(@RequestBody SearchParams params) throws IOException {
-        LOG.debug("search request received, object={}, maxRows={}", params.getObject(), params.getMaxRows());
+    public SearchResults search(@RequestBody SearchRequest params) throws IOException {
+        LOG.debug("search start, object={}, maxRows={}", params.getObject(), params.getMaxRows());
 
-//        List<String> keys = indexClient.search1(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
-//        List<Triple> triples = ntService.get(keys);
-//        return triples;
-        IndexSearchResponse indexSearchResponse = indexClient.scrollSearchBegin(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
+        IndexSearchResponse indexSearchResponse = indexClient.searchAll(params);
+        SearchResults searchResults = new SearchResults();
         if (indexSearchResponse.hitsCount() > 0) {
-            return ntService.get(indexSearchResponse.getHits());
+            searchResults.setTriples(ntService.get(indexSearchResponse.getHits()));
         } else {
-            return Collections.<Triple>emptyList();
+            searchResults.setTriples(Collections.<Triple>emptyList());
         }
+        return searchResults;
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "scroll")
-    public SearchResults scrollSearch(@RequestBody SearchParams params) throws IOException {
+    public SearchResults scrollSearch(@RequestBody SearchRequest params) throws IOException {
         LOG.debug("scrollSearch request, scrollId({})", params.getScrollId());
         IndexSearchResponse indexSearchResponse = null;
         SearchResults searchResults = new SearchResults();
         if (params.getScrollId() == null) {
-            indexSearchResponse = indexClient.scrollSearchBegin(params.getSubject(), params.getPredicate(), params.getObject(), params.getMaxRows());
+            indexSearchResponse = indexClient.scrollSearchBegin(params);
         } else {
             indexSearchResponse = indexClient.scrollSearchNext(params.getScrollId(), DEFAULT_SCAN_HOLD_TIME_MS);
         }

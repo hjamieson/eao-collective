@@ -11,7 +11,7 @@
  * ****************************************************************************************************************
  */
 
-package org.oclc.eao.collective.indexer;
+package org.oclc.eao.collective.indexer.model;
 
 import org.oclc.eao.collective.api.model.Triple;
 
