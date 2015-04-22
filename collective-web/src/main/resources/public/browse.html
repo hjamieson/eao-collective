@@ -24,24 +24,54 @@
     app.controller('BrowseController', function($scope, $http){
         $scope.model = model;
         $scope.model.results = {triples:[], scrollId:null};
+        $scope.model.searchRunning = false;
 
         $scope.searchTextCmd = function(){
             $scope.model.results = {triples:[], scrollId:null};
             $scope.model.query.scrollId = null;
-            
-            if ($scope.model.query.object==null){
-                console.log("object is null!");
+
+            if ($scope.model.subject==null && $scope.model.predicate == null && $scope.model.query.object==null){
+                showAlert('No search criteria specified!');
             } else {
+                $scope.model.searchRunning = true;
                 $http.post('search', $scope.model.query)
                     .success(function(data, status, headers, config){
                         $scope.model.results = data;
+                        $scope.model.searchRunning = false;
                         console.log("request to server successful, scrollId="+ $scope.model.results.scrollId);
                     })
                     .error(function(data, status, headers, config){
                       console.log("call to server failed, status=" + status);
+                      $scope.model.searchRunning = false;
                     });
             }
         };
+
+        $scope.searchScrollCmd = function(){
+            $scope.model.results = {triples:[], scrollId:null};
+            $scope.model.query.scrollId = null;
+            $scope.model.searchRunning = true;
+            $http.post('search/scroll', $scope.model.query)
+                    .success(
+                    function(data, status, headers, config){
+                        $scope.model.results = data;
+                        $scope.model.searchRunning = false;
+                        console.log("request to server successful, scrollId="+ $scope.model.results.scrollId);
+                    })
+                    .error(
+                        function(data, status, headers, config){
+                        handleError(data, status, headers, config);
+                        $scope.model.searchRunning = false;
+                    });
+        };
+
+        function handleError(data, status, headers, config){
+            console.log("host api call failed, status="+status);
+        }
+
+        function showAlert(msg){
+            console.log(msg);
+        }
 
         $scope.moreResultsAvailable = function(){
             return $scope.model.results.scrollId != null;
@@ -81,6 +111,10 @@
         <div class="panel well">
             <form class="form-inline">
                 <div class="form-group">
+                    <label>Collection:</label>
+                    <input type="text" class="form-control" size="30" ng-model="model.query.collection" placeholder="collection">
+                </div>
+                <div class="form-group">
                     <label>Subject:</label>
                     <input type="text" class="form-control" size="30" ng-model="model.query.subject" placeholder="subject text"/>
                 </div>
@@ -103,10 +137,13 @@
                 </div>
                 <div class="form-group">
                     <button class="btn btn-primary" ng-click="searchTextCmd();">Search</button>
+                    <button class="btn btn-info" ng-click="searchScrollCmd();">Page</button>
                     <button class="btn btn-default" ng-click="nextPageCmd();" ng-hide="!moreResultsAvailable()">Next Page</button>
                 </div>
             </form>
         </div>
+
+        <div class="panel panel-warning" ng-show="model.searchRunning" style="margin:4px;"><h4>searching...{{model.searchRunning}}</h4></div>
 
         <hr/>
 

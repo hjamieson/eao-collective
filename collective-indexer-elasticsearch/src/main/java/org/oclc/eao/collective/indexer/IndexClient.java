@@ -154,7 +154,7 @@ public class IndexClient {
         Validate.notNull(client, CLIENT_NOT_CONNECTED);
         BoolQueryBuilder qb = QueryBuilders.boolQuery();
 
-        if (req.getSubject() != null && req.getScrollId().trim().length() != 0) {
+        if (req.getSubject() != null && req.getSubject().trim().length() != 0) {
             qb.must(termQuery("subject", req.getSubject()));
         }
         if (req.getPredicate() != null && req.getPredicate().trim().length() != 0) {
@@ -194,7 +194,7 @@ public class IndexClient {
     public IndexSearchResponse scrollSearchBegin(SearchRequest req) {
         Validate.notNull(client, CLIENT_NOT_CONNECTED);
         BoolQueryBuilder qb = QueryBuilders.boolQuery();
-        if (req.getSubject() != null && req.getScrollId().trim().length() != 0) {
+        if (req.getSubject() != null && req.getSubject().trim().length() != 0) {
             qb.must(termQuery("subject", req.getSubject()));
         }
         if (req.getPredicate() != null && req.getPredicate().trim().length() != 0) {
