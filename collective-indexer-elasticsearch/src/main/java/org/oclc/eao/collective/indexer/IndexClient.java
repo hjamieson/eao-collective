@@ -29,6 +29,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.oclc.eao.collective.api.model.Triple;
+import org.oclc.eao.collective.indexer.model.ArchiveGraph;
 import org.oclc.eao.collective.indexer.model.IndexSearchResponse;
 import org.oclc.eao.collective.indexer.model.SearchRequest;
 import org.slf4j.Logger;
@@ -250,4 +251,16 @@ public class IndexClient {
         }
         return new IndexSearchResponse(holdTime, keyList, scrollResponse.getScrollId());
     }
+
+    public void index(ArchiveGraph ag) {
+        Validate.notNull(client, CLIENT_NOT_CONNECTED);
+        try {
+            String json = om.writeValueAsString(ag.getData());
+            IndexRequestBuilder request = client.prepareIndex(ag.getIndex(), ag.getType(), ag.getId()).setSource(json);
+            request.execute();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
