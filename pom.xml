@@ -24,6 +24,7 @@
         <module>collective-indexer-elasticsearch</module>
         <module>collective-web</module>
         <module>collective-rest-client</module>
+        <module>archive-grid-utils</module>
     </modules>
 
     <dependencyManagement>
