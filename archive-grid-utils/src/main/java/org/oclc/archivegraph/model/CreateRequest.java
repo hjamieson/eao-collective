@@ -11,7 +11,7 @@
  * ****************************************************************************************************************
  */
 
-package org.oclc.eao.collective.indexer.model;
+package org.oclc.archivegraph.model;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,11 +23,16 @@ import java.util.Map;
  * Time: 1:24 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class ArchiveGraph {
+public class CreateRequest {
     private Map<String, Object> command = new HashMap<>();
     private Map<String, Object> data = new HashMap<>();
 
-    public ArchiveGraph() {
+    public CreateRequest() {
+    }
+
+    public CreateRequest(Map<String, Object> command, Map<String, Object> data) {
+        this.command = command;
+        this.data = data;
     }
 
     public Map<String, Object> getCommand() {

@@ -11,15 +11,12 @@
  * ****************************************************************************************************************
  */
 
-package org.oclc.archivegrid.utils;
+package org.oclc.archivegraph.utils;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.oclc.archivegrid.model.CreateRequest;
+import org.oclc.archivegraph.model.CreateRequest;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,28 +28,27 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Description: Reads special archive index commands from stdin and posts them to the ES cluster.  You must provide
- * the http://hostname.com:port to the cluster.
+ * the http://hostname.com:port to the cluster.  Assumes Client is threadsafe.
  * User: jamiesoh
  * Date: 2/27/15
  * Time: 4:33 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class BatchIndexerLoader {
+public class BulkLoad2 {
     private static int POOL_SIZE = 5;
-    private String clusterNode;
     private ExecutorService es;
-    private ObjectPool<IndexClient> clientPool;
+    private ESClient client;
 
     public static void main(String[] args) {
         if (args.length != 1) {
             System.err.println(args);
-            System.err.println("Usage: " + BatchIndexerLoader.class.getSimpleName() + " <ES cluster node>");
+            System.err.println("Usage: " + BulkLoad2.class.getSimpleName() + " <ES cluster node>");
             System.exit(1);
         }
 
-        BatchIndexerLoader loader = new BatchIndexerLoader();
-        loader.clusterNode = args[0];
+        BulkLoad2 loader = new BulkLoad2();
 
+        loader.client = new ESClient(args[0].split(","));
         loader.run();
     }
 
@@ -63,71 +59,56 @@ public class BatchIndexerLoader {
                 new ArrayBlockingQueue<Runnable>(POOL_SIZE),
                 new ThreadPoolExecutor.CallerRunsPolicy());
 
-        clientPool = new GenericObjectPool<IndexClient>(new IndexClientFactory(clusterNode));
-
+        ObjectMapper om = new ObjectMapper();
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String text = null;
         long loaded = 0;
         try {
             while ((text = reader.readLine()) != null) {
-                es.execute(new Task(text));
-                System.out.println("records loaded: " + ++loaded);
+                try {
+                    es.execute(new Task(om.readValue(text, CreateRequest.class)));
+                    loaded++;
+                } catch (JsonMappingException e) {
+                    System.err.println(e.getMessage());
+                } catch (JsonParseException e) {
+                    System.err.println(e.getMessage());
+                }
+                if (loaded % 10000 == 0){
+                    System.out.format("records written: %1$-10d%n", loaded);
+                }
             }
             es.shutdown();
-            System.out.format("%1$d records stored", loaded);
-        } catch (Exception e) {
+            System.out.format("\n****\n%1$d records stored\n****\n", loaded);
+        } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
         } finally {
             try {
                 reader.close();
-            } catch (IOException e) {
+                es.awaitTermination(5000, TimeUnit.MILLISECONDS);
+                client.close();
+            } catch (Exception e) {
             }
         }
     }
 
     class Task implements Runnable {
-        private String text;
+        private CreateRequest createRequest;
 
-        public Task(String text) {
-            this.text = text;
+        public Task(CreateRequest createRequest) {
+            this.createRequest = createRequest;
         }
 
         @Override
         public void run() {
             try {
-                IndexClient client = clientPool.borrowObject();
-                CreateRequest ag = client.readJson(text);
-                client.index(ag);
-                clientPool.returnObject(client);
+                client.exec(createRequest);
             } catch (Exception e) {
+                System.err.println("failed: " + createRequest + "; reason=" + e.getMessage());
                 e.printStackTrace();
-                System.err.println("failed:" + text);
             }
         }
     }
 
-    static class IndexClientFactory extends BasePooledObjectFactory<IndexClient> {
-        private String clusterNode;
 
-        public IndexClientFactory(String clusterNode) {
-            this.clusterNode = clusterNode;
-        }
-
-        @Override
-        public IndexClient create() throws Exception {
-            IndexClient client = new IndexClient(clusterNode).connect();
-            return client;
-        }
-
-        @Override
-        public PooledObject<IndexClient> wrap(IndexClient indexClient) {
-            return new DefaultPooledObject<>(indexClient);
-        }
-
-        @Override
-        public void destroyObject(PooledObject<IndexClient> p) throws Exception {
-            p.getObject().close();
-        }
-    }
 }

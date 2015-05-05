@@ -11,7 +11,7 @@
  * ****************************************************************************************************************
  */
 
-package org.oclc.eao.collective.store.mr;
+package org.oclc.archivegraph.mr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hadoop.conf.Configuration;
@@ -25,8 +25,8 @@ import org.apache.hadoop.mapreduce.lib.output.LazyOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.oclc.eao.collective.indexer.IndexClient;
-import org.oclc.eao.collective.indexer.model.ArchiveGridRequest;
+import org.oclc.archivegraph.model.CreateRequest;
+import org.oclc.archivegraph.utils.ESClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +41,9 @@ import java.io.IOException;
  * Time: 4:19 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class ArchiveGridIndexer extends Configured implements Tool {
-    private static final Logger LOG = LoggerFactory.getLogger(ArchiveGridIndexer.class);
-    public static final String JOB_NAME = "ArchiveGrid ES Indexer";
+public class BulkLoad extends Configured implements Tool {
+    private static final Logger LOG = LoggerFactory.getLogger(BulkLoad.class);
+    public static final String JOB_NAME = "ArchiveGraph ES Bulk Loader";
     public static final String HOST_LIST_PROPERTY = "org.collective.es.hostlist";
 
     private String[] hosts = {"tripstoreap01dxdu.dev.oclc.org", "tripstoreap02dxdu.dev.oclc.org"};
@@ -54,13 +54,13 @@ public class ArchiveGridIndexer extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        System.exit(ToolRunner.run(new ArchiveGridIndexer(), args));
+        System.exit(ToolRunner.run(new BulkLoad(), args));
     }
 
     @Override
     public int run(String[] args) throws Exception {
         if (args.length != 2) {
-            LOG.error("Usage:" + ArchiveGridIndexer.class.getSimpleName() + " <input-file> <rejects-file>");
+            LOG.error("Usage:" + BulkLoad.class.getSimpleName() + " <input-file> <rejects-file>");
             return 1;
         }
         /*
@@ -94,13 +94,12 @@ public class ArchiveGridIndexer extends Configured implements Tool {
     public static class Mapper extends org.apache.hadoop.mapreduce.Mapper<LongWritable, Text, Text, Text> {
         private Text failureReason = new Text();
         private Text ID = new Text();
-        private IndexClient indexer;
+        private ESClient indexer;
         private ObjectMapper om = new ObjectMapper();
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
-            indexer = new IndexClient(context.getConfiguration().getStrings(HOST_LIST_PROPERTY));
-            indexer.connect();
+            indexer = new ESClient(context.getConfiguration().getStrings(HOST_LIST_PROPERTY));
         }
 
         @Override
@@ -114,8 +113,8 @@ public class ArchiveGridIndexer extends Configured implements Tool {
              * we get a row that has the triples we want to emit
              */
             try {
-                ArchiveGridRequest ag = om.readValue(value.getBytes(), ArchiveGridRequest.class);
-                indexer.index(ag.getIndex(), ag.getType(), ag.getId(), ag.getData());
+                CreateRequest create = om.readValue(value.getBytes(), CreateRequest.class);
+                indexer.exec(create);
                 context.getCounter(COUNTERS.SUCCESSFUL).increment(1l);
             } catch (Exception e) {
                 // write the fail to the output file

@@ -32,7 +32,7 @@ import static org.junit.Assert.fail;
  * Time: 1:25 PM
  * &copy;2013 OCLC Data Architecture Group
  */
-public class ArchiveGraphModelTest {
+public class ArchiveGridRequestModelTest {
     @Test
     public void testReadSample() {
         try {
@@ -53,7 +53,7 @@ public class ArchiveGraphModelTest {
         try {
             ObjectMapper om = new ObjectMapper();
             File agDemo = new File("src/test/resources/ag_demo1.json");
-            ArchiveGraph ag = om.readValue(agDemo, ArchiveGraph.class);
+            ArchiveGridRequest ag = om.readValue(agDemo, ArchiveGridRequest.class);
             for (Map.Entry me : ag.getData().entrySet()) {
                 System.out.println(me.getKey() + ":" + me.getValue());
             }
@@ -68,7 +68,7 @@ public class ArchiveGraphModelTest {
         try {
             ObjectMapper om = new ObjectMapper();
             File agDemo = new File("src/test/resources/ag_demo1.json");
-            ArchiveGraph ag = om.readValue(agDemo, ArchiveGraph.class);
+            ArchiveGridRequest ag = om.readValue(agDemo, ArchiveGridRequest.class);
             assertTrue(ag.getCommand().get("create") instanceof Map);
             assertThat(((Map) ag.getCommand().get("create")).get("_index").toString(), equalTo("everest"));
             assertThat(ag.getIndex(), equalTo("everest"));

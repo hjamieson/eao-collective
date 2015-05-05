@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.Validate;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.transport.TransportClient;
@@ -29,7 +30,6 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.oclc.eao.collective.api.model.Triple;
-import org.oclc.eao.collective.indexer.model.ArchiveGraph;
 import org.oclc.eao.collective.indexer.model.IndexSearchResponse;
 import org.oclc.eao.collective.indexer.model.SearchRequest;
 import org.slf4j.Logger;
@@ -44,7 +44,8 @@ import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 
 /**
  * Description: uses transport mode to make calls to the elasticsearch cluster.  This is the
- * client to use unless you are doing unit testing.
+ * client to use unless you are doing unit testing.  This client does not have any embedded
+ * jackson classes to assure that it can be used safely in a threaded environment.
  * User: jamiesoh
  * Date: 2/25/15
  * Time: 2:14 PM
@@ -95,6 +96,14 @@ public class IndexClient {
                 .actionGet();
     }
 
+    public void index(String index, String type, String id, String jsonDocument) {
+        Validate.notNull(client, CLIENT_NOT_CONNECTED);
+        IndexResponse response = client.prepareIndex(index, type, id)
+                .setSource(jsonDocument)
+                .execute()
+                .actionGet();
+    }
+
     public Map<String, Object> get(String idx, String type, String key) {
         Validate.notNull(client, CLIENT_NOT_CONNECTED);
         GetResponse resp = client.prepareGet(idx, type, key)
@@ -111,7 +120,7 @@ public class IndexClient {
         try {
             String json = om.writeValueAsString(triple);
             IndexRequestBuilder request = client.prepareIndex(INDEX, TYPE_NT, triple.getId()).setSource(json);
-            request.execute();
+            request.execute().actionGet();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -148,6 +157,7 @@ public class IndexClient {
 
     /**
      * search method that is not pageable; you get the whole enchilada.
+     *
      * @param req
      * @return
      */
@@ -250,17 +260,6 @@ public class IndexClient {
             keyList.add(hit.getId());
         }
         return new IndexSearchResponse(holdTime, keyList, scrollResponse.getScrollId());
-    }
-
-    public void index(ArchiveGraph ag) {
-        Validate.notNull(client, CLIENT_NOT_CONNECTED);
-        try {
-            String json = om.writeValueAsString(ag.getData());
-            IndexRequestBuilder request = client.prepareIndex(ag.getIndex(), ag.getType(), ag.getId()).setSource(json);
-            request.execute();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
 }

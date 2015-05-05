@@ -12,6 +12,8 @@
 package org.oclc.eao.collective.indexer;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +31,7 @@ import static org.junit.Assert.assertThat;
  * &copy;2013 OCLC Data Architecture Group
  */
 public class IndexClientTezt {
-
+    private static final Logger LOG = LoggerFactory.getLogger(IndexClientTezt.class);
 
     @Test
     public void indexTest() {
