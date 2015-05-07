@@ -22,6 +22,7 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.oclc.archivegraph.model.CreateRequest;
+import org.oclc.archivegraph.model.CreateRequest2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,9 +50,20 @@ public class ESClient {
         tc = new TransportClient(settings, false);
 
         for (String host : hostList) {
-            LOG.debug("adding transport socket: {}", host);
+            LOG.info("adding transport socket: {}", host);
             tc.addTransportAddress(new InetSocketTransportAddress(host, 9300));
         }
+    }
+
+    public ESClient(String esHost) {
+        Validate.notNull(esHost, "hostList cannot be empty!");
+        Settings settings = ImmutableSettings.settingsBuilder()
+                .put("client.transport.sniff", true)
+                .put("cluster.name", DEFAULT_CLUSTER)
+                .build();
+        tc = new TransportClient(settings, false);
+        LOG.info("adding transport socket: {}", esHost);
+        tc.addTransportAddress(new InetSocketTransportAddress(esHost, 9300));
     }
 
     public void exec(CreateRequest request) {
@@ -60,9 +72,20 @@ public class ESClient {
         LOG.trace("response: {}", resp.getIndex());
     }
 
+    public void exec(CreateRequest2 request) {
+        Validate.notNull(tc, "transportClient is null");
+        IndexResponse resp = null;
+        if (request.needsId()) {
+            resp = tc.prepareIndex(request.getIndex(), request.getType()).setSource(request.getDoc()).execute().actionGet();
+        } else {
+            resp = tc.prepareIndex(request.getIndex(), request.getType(), request.getId()).setSource(request.getDoc()).execute().actionGet();
+        }
+        LOG.trace("response: {}", resp.getId());
+    }
+
     public void close() {
         if (tc != null) {
-            LOG.debug("closing ES client {}", this.hashCode());
+            LOG.info("closing ES client {}", this.hashCode());
             tc.close();
         }
     }
