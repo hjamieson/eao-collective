@@ -69,7 +69,7 @@ public class BulkLoad2 extends Configured implements Tool {
 
     @Override
     public int run(String[] args) throws Exception {
-        if (args.length != 2) {
+        if (args.length < 2) {
             LOG.error("Usage:" + BulkLoad2.class.getSimpleName()
                       + " <input-file> <es-host-name> [optional-index-override]");
             return 1;
