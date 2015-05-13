@@ -16,6 +16,7 @@ package org.oclc.archivegraph.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.lang3.Validate;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -92,5 +93,10 @@ public class ESClient {
 
     public CreateRequest readJson(String json) throws IOException {
         return new ObjectMapper().readValue(json, CreateRequest.class);
+    }
+
+    public Client getClient(){
+        Validate.notNull(tc);
+        return tc;
     }
 }
