@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -131,15 +132,18 @@ public class BulkLoad2 extends Configured implements Tool {
                 @Override
                 public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
                     LOG.trace("we are in afterBulk");
+                    LOG.info("afterBulk(id={}), hasFailures={}, itemsSaved={}", executionId, response.hasFailures(), response.getItems().length);
                 }
 
                 @Override
                 public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
                     LOG.trace("we are in error afterBulk");
+                    LOG.info("afterBulk(id={})",executionId);
+                    LOG.error(failure.getMessage(), failure);
                 }
-            }).setBulkActions(10000)
+            }).setBulkActions(3000)
                     .setBulkSize(new ByteSizeValue(250, ByteSizeUnit.MB))
-                    .setConcurrentRequests(1)
+                    .setConcurrentRequests(0)
                     .build();
             bulkRequestBuilder = indexer.getClient().prepareBulk();
 
@@ -161,7 +165,7 @@ public class BulkLoad2 extends Configured implements Tool {
                 CreateRequest2 create = new CreateRequest2(value.toString());
                 bulkProcessor.add(new IndexRequest((indexNameOverride == null) ?
                         create.getIndex() : indexNameOverride,
-                        create.getType()).source(create.getDoc()));
+                        create.getType(), UUID.randomUUID().toString()).source(create.getDoc()));
                 context.getCounter(COUNTERS.SUCCESSFUL).increment(1l);
             } catch (Exception e) {
                 // write the fail to the output file
