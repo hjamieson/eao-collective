@@ -24,6 +24,7 @@ import org.apache.hadoop.mapreduce.lib.output.LazyOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -113,6 +114,7 @@ public class BulkLoad2 extends Configured implements Tool {
 
 
     public static class Mapper extends org.apache.hadoop.mapreduce.Mapper<LongWritable, Text, Text, Text> {
+        public static final int MAX_SEND_CNT = 1000;
         private Text failureReason = new Text();
         private Text ID = new Text();
         private ESClient indexer;
@@ -132,7 +134,12 @@ public class BulkLoad2 extends Configured implements Tool {
                 @Override
                 public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
                     LOG.trace("we are in afterBulk");
-                    LOG.info("afterBulk(id={}), hasFailures={}, itemsSaved={}", executionId, response.hasFailures(), response.getItems().length);
+                    if (response.hasFailures()) {
+                        LOG.info("afterBulk(id={}), hasFailures={}, itemsSaved={}", executionId, response.hasFailures(), response.getItems().length);
+                        for (BulkItemResponse bir: response.getItems()){
+                            LOG.error("item failed: {}", bir.getFailureMessage());
+                        }
+                    }
                 }
 
                 @Override
@@ -141,7 +148,7 @@ public class BulkLoad2 extends Configured implements Tool {
                     LOG.info("afterBulk(id={})",executionId);
                     LOG.error(failure.getMessage(), failure);
                 }
-            }).setBulkActions(3000)
+            }).setBulkActions(MAX_SEND_CNT)
                     .setBulkSize(new ByteSizeValue(250, ByteSizeUnit.MB))
                     .setConcurrentRequests(0)
                     .build();
