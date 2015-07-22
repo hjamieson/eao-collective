@@ -114,7 +114,7 @@ public class BulkLoad2 extends Configured implements Tool {
 
 
     public static class Mapper extends org.apache.hadoop.mapreduce.Mapper<LongWritable, Text, Text, Text> {
-        public static final int MAX_SEND_CNT = 1000;
+        public static final int MAX_SEND_CNT = 5000;
         private Text failureReason = new Text();
         private Text ID = new Text();
         private ESClient indexer;
@@ -136,7 +136,7 @@ public class BulkLoad2 extends Configured implements Tool {
                     LOG.trace("we are in afterBulk");
                     if (response.hasFailures()) {
                         LOG.info("afterBulk(id={}), hasFailures={}, itemsSaved={}", executionId, response.hasFailures(), response.getItems().length);
-                        for (BulkItemResponse bir: response.getItems()){
+                        for (BulkItemResponse bir : response.getItems()) {
                             LOG.error("item failed: {}", bir.getFailureMessage());
                         }
                     }
@@ -145,7 +145,7 @@ public class BulkLoad2 extends Configured implements Tool {
                 @Override
                 public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
                     LOG.trace("we are in error afterBulk");
-                    LOG.info("afterBulk(id={})",executionId);
+                    LOG.info("afterBulk(id={})", executionId);
                     LOG.error(failure.getMessage(), failure);
                 }
             }).setBulkActions(MAX_SEND_CNT)
@@ -172,7 +172,8 @@ public class BulkLoad2 extends Configured implements Tool {
                 CreateRequest2 create = new CreateRequest2(value.toString());
                 bulkProcessor.add(new IndexRequest((indexNameOverride == null) ?
                         create.getIndex() : indexNameOverride,
-                        create.getType(), UUID.randomUUID().toString()).source(create.getDoc()));
+                        create.getType(),
+                        create.needsId() ? UUID.randomUUID().toString() : create.getId()).source(create.getDoc()));
                 context.getCounter(COUNTERS.SUCCESSFUL).increment(1l);
             } catch (Exception e) {
                 // write the fail to the output file
