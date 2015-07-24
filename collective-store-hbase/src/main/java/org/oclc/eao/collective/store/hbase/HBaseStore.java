@@ -13,16 +13,16 @@
 
 package org.oclc.eao.collective.store.hbase;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HConnection;
-import org.apache.hadoop.hbase.client.HConnectionManager;
-import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.oclc.eao.collective.api.domain.NtStore;
 import org.oclc.eao.collective.api.model.Triple;
@@ -44,9 +44,10 @@ import java.util.List;
 public class HBaseStore implements NtStore {
     private static final Logger LOG = LoggerFactory.getLogger(HBaseStore.class);
     public static final byte[] DEFAULT_CF = "data".getBytes();
-    private final HConnection hConnection;
+    private final Connection connection;
     private Configuration config;
-    private String tableName = "eao_collective";
+    private static final String DEFAULT_TABLE_NAME = "eao_collective";
+    private final TableName tableName;
 
     public static final byte[] ID_CQ = "id".getBytes();
     public static final byte[] SUBJ_CQ = "subject".getBytes();
@@ -60,9 +61,10 @@ public class HBaseStore implements NtStore {
     public HBaseStore(Configuration config) {
         try {
             this.config = config;
-            hConnection = HConnectionManager.createConnection(config);
-            LOG.info("HTable server instantiated...");
-        } catch (ZooKeeperConnectionException e) {
+            connection = ConnectionFactory.createConnection(this.config);
+            LOG.info("{} server instantiated...", this.getClass().getSimpleName());
+            this.tableName = TableName.valueOf(DEFAULT_TABLE_NAME);
+        } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             throw new RuntimeException("Failed to start HBaseStore:", e);
         }
@@ -71,36 +73,28 @@ public class HBaseStore implements NtStore {
     @Override
     public void save(Triple nt) throws IOException {
         Put put = getPut(nt);
-        HTableInterface hTable = null;
-        try {
-            hTable = hConnection.getTable(tableName);
+        try (Table hTable = connection.getTable(tableName)) {
             hTable.put(put);
-        } catch (Exception e) {
-            throw new IOException(e);
-        } finally {
-            hTable.close();
         }
     }
 
     public static Put getPut(Triple nt) {
 
         Put put = new Put(Bytes.toBytes(nt.getId()));
-        put.add(DEFAULT_CF, ID_CQ, nt.getId().getBytes());
-        put.add(DEFAULT_CF, SUBJ_CQ, nt.getSubject().getBytes());
-        put.add(DEFAULT_CF, PRED_CQ, nt.getPredicate().getBytes());
-        put.add(DEFAULT_CF, OBJ_CQ, nt.getObject().getBytes());
-        put.add(DEFAULT_CF, COLLECTION_CQ, nt.getCollection().toString().getBytes());
-        put.add(DEFAULT_CF, INSTANCE_CQ, nt.getInstance().getBytes());
-        put.add(DEFAULT_CF, WEIGHT_CQ, Bytes.toBytes(nt.getWeight()));
+        put.addColumn(DEFAULT_CF, ID_CQ, nt.getId().getBytes());
+        put.addColumn(DEFAULT_CF, SUBJ_CQ, nt.getSubject().getBytes());
+        put.addColumn(DEFAULT_CF, PRED_CQ, nt.getPredicate().getBytes());
+        put.addColumn(DEFAULT_CF, OBJ_CQ, nt.getObject().getBytes());
+        put.addColumn(DEFAULT_CF, COLLECTION_CQ, nt.getCollection().toString().getBytes());
+        put.addColumn(DEFAULT_CF, INSTANCE_CQ, nt.getInstance().getBytes());
+        put.addColumn(DEFAULT_CF, WEIGHT_CQ, Bytes.toBytes(nt.getWeight()));
         return put;
     }
 
     @Override
     public Triple get(String id) throws IOException {
         Get get = new Get(Bytes.toBytes(id));
-        HTableInterface hTable = null;
-        try {
-            hTable = hConnection.getTable(tableName);
+        try (Table hTable = connection.getTable(tableName)) {
             Result result = hTable.get(get);
             if (!result.isEmpty()) {
                 Triple resp = getTripleFromResult(result);
@@ -108,8 +102,6 @@ public class HBaseStore implements NtStore {
             } else {
                 return null;
             }
-        } finally {
-            hTable.close();
         }
     }
 
@@ -117,10 +109,9 @@ public class HBaseStore implements NtStore {
     public List<Triple> get(Collection<String> keyList) throws IOException {
         LOG.debug("get for ({}) items", keyList.size());
         // todo implement multi-get from hbase using keys.
-        HTableInterface hTable = null;
         List<Triple> triples = new ArrayList<>();
-        try {
-            hTable = hConnection.getTable(tableName);
+        try (Table hTable = connection.getTable(tableName);) {
+
             for (String key : keyList) {
                 Result result = hTable.get(new Get(Bytes.toBytes(key)));
                 if (!result.isEmpty()) {
@@ -130,10 +121,6 @@ public class HBaseStore implements NtStore {
                 }
             }
             return triples;
-        } catch (Exception e) {
-            throw new IOException(e);
-        } finally {
-            hTable.close();
         }
     }
 
@@ -158,13 +145,8 @@ public class HBaseStore implements NtStore {
     @Override
     public void delete(String id) throws IOException {
         Delete del = new Delete(Bytes.toBytes(id));
-        HTableInterface hTable = null;
-        try {
-            hTable = hConnection.getTable(tableName);
+        try (Table hTable = connection.getTable(tableName)) {
             hTable.delete(del);
-            hTable.flushCommits();
-        } finally {
-            hTable.close();
         }
     }
 
@@ -173,19 +155,10 @@ public class HBaseStore implements NtStore {
      */
     public void close() {
         try {
-            hConnection.close();
+            connection.close();
         } catch (IOException e) {
         }
         LOG.info("{} store closed", this.getClass().getSimpleName());
-    }
-
-
-    public String getTableName() {
-        return tableName;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
     }
 
 }

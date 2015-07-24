@@ -5,7 +5,7 @@
     <parent>
         <artifactId>collective</artifactId>
         <groupId>org.oclc.eao</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0-cdh54</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -50,7 +50,12 @@
 
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase</artifactId>
+            <artifactId>hbase-client</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>

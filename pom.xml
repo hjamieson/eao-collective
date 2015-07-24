@@ -7,7 +7,7 @@
     <groupId>org.oclc.eao</groupId>
     <artifactId>collective</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0-cdh54</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,6 +17,9 @@
         <spring.boot.version>1.2.1.RELEASE</spring.boot.version>
         <hadoop.pom.version>0.1-SNAPSHOT</hadoop.pom.version>
         <elasticsearch.version>1.4.4</elasticsearch.version>
+        <hadoop.version>2.6.0-cdh5.4.3</hadoop.version>
+        <hadoop.mr.version>2.6.0-mr1-cdh5.4.3</hadoop.mr.version>
+        <hbase.version>1.0.0-cdh5.4.3</hbase.version>
     </properties>
 
     <description>EAO LD Collective Concept Vehicle</description>
@@ -58,20 +61,36 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
             <dependency>
-                <groupId>org.oclc.hadoop</groupId>
-                <artifactId>hadoop-pom</artifactId>
-                <version>${hadoop.pom.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-client</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-core</artifactId>
+                <version>${hadoop.mr.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.oclc.hadoop</groupId>
-                <artifactId>hbase-pom</artifactId>
-                <version>${hadoop.pom.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-client</artifactId>
+                <version>${hbase.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-server</artifactId>
+                <version>${hbase.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.elasticsearch</groupId>
                 <artifactId>elasticsearch</artifactId>
