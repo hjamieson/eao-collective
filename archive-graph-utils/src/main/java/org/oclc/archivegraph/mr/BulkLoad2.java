@@ -59,6 +59,7 @@ public class BulkLoad2 extends Configured implements Tool {
     public static final String JOB_NAME = "ArchiveGraph ES Bulk Loader2";
     public static final String HOST_LIST_PROPERTY = "org.collective.es.hostlist";
     public static final String INDEX_NAME_OVERRIDE = "index.name.override";
+    public static final String ES_CLUSTER_NAME = "es.cluster.name";
 
     private enum COUNTERS {
         SUCCESSFUL,
@@ -73,14 +74,15 @@ public class BulkLoad2 extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         if (args.length < 2) {
             LOG.error("Usage:" + BulkLoad2.class.getSimpleName()
-                      + " <input-file> <es-host-name> [optional-index-override]");
+                      + " <input-file> <es-cluster-name> <es-host-name> [optional-index-override]");
             return 1;
         }
         /*
         args:
         0 = input path
-        1 = output path
-        2 = index name override (optional)
+        1 = cluster name
+        2 = hostname
+        3 = index name override (optional)
         rejects = outputpath + ".rejects"
          */
         Configuration conf = getConf();
@@ -88,14 +90,17 @@ public class BulkLoad2 extends Configured implements Tool {
             conf.setClassLoader(this.getClass().getClassLoader());
         }
 
-        conf.set(HOST_LIST_PROPERTY, args[1]);
+        conf.set(ES_CLUSTER_NAME, args[1]);
+        LOG.info("using {} as cluster id", args[1]);
+
+        conf.set(HOST_LIST_PROPERTY, args[2]);
         // grab the filename to use for rejects
         String rejectsFile = args[0].substring(args[0].lastIndexOf("/") + 1) + ".rejects";
         LOG.info("rejects will be output to {}", rejectsFile);
 
-        if (args.length > 2) {
-            conf.set(INDEX_NAME_OVERRIDE, args[2]);
-            LOG.info("index name override({}) requested", args[2]);
+        if (args.length > 3) {
+            conf.set(INDEX_NAME_OVERRIDE, args[3]);
+            LOG.info("index name override({}) requested", args[3]);
         }
 
         Job job = Job.getInstance(conf, JOB_NAME);
@@ -124,7 +129,8 @@ public class BulkLoad2 extends Configured implements Tool {
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
-            indexer = new ESClient(context.getConfiguration().get(HOST_LIST_PROPERTY));
+            indexer = new ESClient(context.getConfiguration().get(ES_CLUSTER_NAME),
+                    context.getConfiguration().get(HOST_LIST_PROPERTY));
             bulkProcessor = BulkProcessor.builder(indexer.getClient(), new BulkProcessor.Listener() {
                 @Override
                 public void beforeBulk(long executionId, BulkRequest request) {
@@ -149,7 +155,7 @@ public class BulkLoad2 extends Configured implements Tool {
                     LOG.error(failure.getMessage(), failure);
                 }
             }).setBulkActions(MAX_SEND_CNT)
-                    .setBulkSize(new ByteSizeValue(250, ByteSizeUnit.MB))
+                    .setBulkSize(new ByteSizeValue(1, ByteSizeUnit.MB))
                     .setConcurrentRequests(0)
                     .build();
             bulkRequestBuilder = indexer.getClient().prepareBulk();

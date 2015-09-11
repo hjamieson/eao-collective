@@ -44,14 +44,14 @@ public class BulkLoad {
     private ESClient client;
 
     public static void main(String[] args) {
-        if (args.length != 1) {
+        if (args.length != 2) {
             System.err.println(args);
-            System.err.println("Usage: " + BulkLoad.class.getSimpleName() + " <ES cluster node>");
+            System.err.println("Usage: " + BulkLoad.class.getSimpleName() + " <ES Cluster Name> <ES cluster node>");
             System.exit(1);
         }
 
         BulkLoad loader = new BulkLoad();
-        loader.client = new ESClient(args[0].split(","));
+        loader.client = new ESClient(args[0], args[1].split(","));
         loader.run();
     }
 

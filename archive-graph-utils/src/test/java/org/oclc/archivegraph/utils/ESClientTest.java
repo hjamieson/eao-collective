@@ -28,7 +28,7 @@ import java.util.Map;
 public class ESClientTest {
     @Test
     public void testIndexRecord(){
-        ESClient a1 = new ESClient("tripstoreap01dxdu.dev.oclc.org");
+        ESClient a1 = new ESClient("eao-cluster","tripstoreap01dxdu.dev.oclc.org");
         HashMap<String, Object> cmd = new HashMap<String, Object>();
         Map<String,Object> create = new HashMap<>();
         create.put("_index","hugh");

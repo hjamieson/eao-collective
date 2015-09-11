@@ -42,11 +42,12 @@ public class ESClient {
     public static final String DEFAULT_CLUSTER = "eao-cluster";
     private final TransportClient tc;
 
-    public ESClient(String... hostList) {
-        Validate.notNull(hostList, "hostList cannot be empty!");
+    public ESClient(String clusterName, String... hostList) {
+        Validate.notNull(clusterName,"no cluster name provided");
+        Validate.notEmpty(hostList, "hostList cannot be empty!");
         Settings settings = ImmutableSettings.settingsBuilder()
                 .put("client.transport.sniff", true)
-                .put("cluster.name", DEFAULT_CLUSTER)
+                .put("cluster.name", clusterName)
                 .build();
         tc = new TransportClient(settings, false);
 
@@ -56,16 +57,6 @@ public class ESClient {
         }
     }
 
-    public ESClient(String esHost) {
-        Validate.notNull(esHost, "hostList cannot be empty!");
-        Settings settings = ImmutableSettings.settingsBuilder()
-                .put("client.transport.sniff", true)
-                .put("cluster.name", DEFAULT_CLUSTER)
-                .build();
-        tc = new TransportClient(settings, false);
-        LOG.info("adding transport socket: {}", esHost);
-        tc.addTransportAddress(new InetSocketTransportAddress(esHost, 9300));
-    }
 
     public void exec(CreateRequest request) {
         Validate.notNull(tc, "transportClient is null");
@@ -95,7 +86,7 @@ public class ESClient {
         return new ObjectMapper().readValue(json, CreateRequest.class);
     }
 
-    public Client getClient(){
+    public Client getClient() {
         Validate.notNull(tc);
         return tc;
     }
